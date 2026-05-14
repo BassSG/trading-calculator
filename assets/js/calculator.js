@@ -290,6 +290,19 @@ function selectPair(el) {
     state.pip = parseFloat(el.dataset.pip);
     state.unit = parseInt(el.dataset.unit);
 
+    // Update selected pair banner
+    const banner = document.getElementById('selected-pair-banner');
+    const nameEl = document.getElementById('spair-name');
+    const infoEl = document.getElementById('spair-info');
+    if (banner) {
+        banner.style.display = 'flex';
+        nameEl.textContent = state.pair.replace('USD', '/USD');
+        const dec = (state.pair.includes('JPY') || state.pair === 'XAUUSD' || state.pair === 'BTCUSD' || state.pair === 'ETHUSD') ? 2 : 5;
+        const priceEl = document.getElementById('price-' + state.pair);
+        const livePrice = marketData[state.pair]?.price;
+        infoEl.textContent = livePrice ? 'Live: ' + livePrice.toFixed(dec) : 'ราคาตลาด';
+    }
+
     // Enable next button
     const nextBtn = document.getElementById('step3-next');
     if (nextBtn) nextBtn.disabled = false;
@@ -532,38 +545,6 @@ function animateNumber(el) {
     el.style.animation = 'none';
     el.offsetHeight;
     el.style.animation = 'countUp 0.4s ease';
-}
-
-// ================================================
-// Toastify Notifications ★ FROM toastify-js (2.5K ⭐)
-// ================================================
-
-function showToast(message, type = 'success') {
-    if (typeof Toastify === 'undefined') {
-        console.log('Toastify not loaded, falling back to alert:', message);
-        return;
-    }
-    const colors = {
-        success: 'linear-gradient(135deg, #1a7f37, #2ecc71)',
-        error: 'linear-gradient(135deg, #c0392b, #e74c3c)',
-        warning: 'linear-gradient(135deg, #b8860b, #f39c12)',
-        info: 'linear-gradient(135deg, #1a5276, #3498db)'
-    };
-    Toastify({
-        text: message,
-        duration: 3000,
-        gravity: 'top',
-        position: 'right',
-        style: {
-            background: colors[type] || colors.success,
-            borderRadius: '12px',
-            fontSize: '14px',
-            fontFamily: "'Prompt', sans-serif",
-            boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-            zIndex: 9999
-        },
-        stopOnFocus: true
-    }).showToast();
 }
 
 // ================================================
