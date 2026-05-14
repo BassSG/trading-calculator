@@ -131,7 +131,71 @@ body {
 .input-group label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
 
 /* ================================================
-   MOBILE INPUT FIX
+   INPUT UNIT COMBINED FIELD (Balance etc.)
+   ================================================ */
+.input-with-unit {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0d1321;
+    min-height: 52px; /* Taller for touch */
+}
+.input-with-unit input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none !important;
+    border-radius: 0;
+    padding: 14px 16px;
+    font-size: 18px !important;
+    font-weight: 600;
+    color: #FFD700 !important; /* Gold text for balance */
+    caret-color: #FFD700;
+    letter-spacing: 0.5px;
+    height: 100%;
+}
+.input-with-unit input:focus {
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+}
+.input-with-unit input::-webkit-inner-spin-button,
+.input-with-unit input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+}
+.input-with-unit input {
+    -moz-appearance: textfield;
+}
+.input-with-unit select {
+    background: #1a2338;
+    border: none !important;
+    border-left: 1px solid #334155 !important;
+    border-radius: 0;
+    padding: 14px 12px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #FFD700;
+    cursor: pointer;
+    white-space: nowrap;
+    min-width: 70px;
+}
+.input-with-unit select:focus {
+    outline: none;
+    background: #1f2a40;
+}
+
+/* ================================================
+   BALANCE INPUT - ENHANCED
+   ================================================ */
+#balance {
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* ================================================
+   SINGLE INPUT FIELDS (all others)
    ================================================ */
 input[type="number"],
 input[type="text"],
@@ -140,16 +204,17 @@ select {
     appearance: none;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    font-size: 16px !important; /* Prevent iOS zoom on focus */
+    font-size: 16px !important;
     color: #ffffff;
     background: #0d1321;
     border: 1px solid #334155;
     border-radius: 8px;
-    padding: 12px 14px;
+    padding: 14px 16px;
     width: 100%;
+    min-height: 52px; /* Touch-friendly height */
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
     font-family: 'JetBrains Mono', monospace;
-    caret-color: #FFD700; /* Cursor สีทอง */
+    caret-color: #FFD700;
 }
 input[type="number"]:focus,
 input[type="text"]:focus,
@@ -166,27 +231,10 @@ input[type="number"]::placeholder {
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
-    margin: 0;
 }
 input[type="number"] {
     -moz-appearance: textfield;
 }
-
-/* ================================================
-   LEGACY INPUT STYLES (fallback)
-   ================================================ */
-.input-with-unit { display: flex; gap: 0; }
-.input-with-unit input { flex: 1; min-width: 0; }
-.input-with-unit select, .input-with-unit .unit {
-    background: #0d1321;
-    border: 1px solid #334155;
-    color: #ffffff;
-    padding: 12px 14px;
-    font-size: 16px;
-    font-family: 'JetBrains Mono', monospace;
-}
-.input-with-unit select { border-left: none; border-radius: 0 8px 8px 0; cursor: pointer; }
-.input-with-unit .unit { border-right: none; border-radius: 8px 0 0 8px; display: flex; align-items: center; color: #64748b; font-size: 13px; }
 
 /* ================================================
    RISK TOGGLE
