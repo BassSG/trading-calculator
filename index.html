@@ -3,29 +3,282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📊 Trading Calculator - Position Size & Lot Calculator</title>
+    <title>📊 Trading Calculator Pro - Position Size & ATR Risk Management</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="assets/css/style.css" rel="stylesheet">
+    <style>
+        /* === LIVE PRICE TICKER === */
+        .price-ticker {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: var(--bg-input);
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            border: 1px solid transparent;
+        }
+        .ticker-item:hover { border-color: var(--gold); }
+        .ticker-item.active { border-color: var(--gold); background: rgba(255,215,0,0.1); }
+        .ticker-symbol { font-weight: 600; color: var(--text-primary); }
+        .ticker-price { font-family: 'JetBrains Mono', monospace; color: var(--gold); font-weight: 500; }
+        .ticker-change { font-size: 11px; }
+        .ticker-change.up { color: var(--bullish); }
+        .ticker-change.down { color: var(--bearish); }
+        .ticker-refresh {
+            margin-left: auto;
+            padding: 4px 8px;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 11px;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        .ticker-refresh:hover { border-color: var(--gold); color: var(--gold); }
+        .ticker-refresh.spinning { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* === ATR PANEL === */
+        .atr-panel {
+            background: linear-gradient(135deg, #0d1f3c 0%, #0a1628 100%);
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .atr-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .atr-title { font-size: 14px; font-weight: 600; color: var(--gold); }
+        .atr-badge {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .atr-badge.low { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+        .atr-badge.medium { background: rgba(234,179,8,0.15); color: #eab308; border: 1px solid rgba(234,179,8,0.3); }
+        .atr-badge.high { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+        .atr-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .atr-stat {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+        .atr-stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+        .atr-stat-value { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--gold); }
+        .atr-stat-sub { font-size: 10px; color: var(--text-muted); }
+        .atr-sl-recommendation {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: rgba(255,215,0,0.05);
+            border: 1px solid rgba(255,215,0,0.15);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .atr-sl-label { font-size: 12px; color: var(--text-secondary); }
+        .atr-sl-value { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: #22c55e; }
+        .atr-sl-pips { font-size: 11px; color: var(--text-muted); }
+
+        /* === PAIR INFO ROW === */
+        .pair-info-bar {
+            display: flex;
+            gap: 12px;
+            padding: 10px 14px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+            align-items: center;
+        }
+        .pair-info-item { display: flex; flex-direction: column; gap: 2px; }
+        .pair-info-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .pair-info-value { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-primary); }
+        .pair-info-value.live { color: var(--gold); }
+        .pair-info-divider { width: 1px; height: 30px; background: var(--border); }
+
+        /* === RISK SLIDER === */
+        .risk-slider-container { margin-top: 8px; }
+        .risk-slider-track { position: relative; height: 6px; background: var(--bg-input); border-radius: 3px; margin: 8px 0; }
+        .risk-slider-fill { position: absolute; left: 0; top: 0; height: 100%; background: linear-gradient(90deg, var(--gold-dark), var(--gold)); border-radius: 3px; transition: width 0.3s; }
+        .risk-slider-thumb {
+            position: absolute; top: 50%; transform: translate(-50%, -50%);
+            width: 18px; height: 18px; background: var(--gold); border-radius: 50%;
+            cursor: pointer; box-shadow: 0 0 8px rgba(255,215,0,0.5);
+        }
+        .risk-slider-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); }
+
+        /* === ENHANCED INPUT GROUP === */
+        .input-with-suggest {
+            position: relative;
+        }
+        .input-suggest-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 2px 6px;
+            background: rgba(255,215,0,0.1);
+            border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 4px;
+            font-size: 10px;
+            color: var(--gold);
+            cursor: pointer;
+        }
+        .input-suggest-btn:hover { background: rgba(255,215,0,0.2); }
+
+        /* === PAIR SELECTOR V2 === */
+        .pair-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+        .pair-tab {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            transition: var(--transition-fast);
+        }
+        .pair-tab.active { background: var(--gold); color: #000; font-weight: 600; border-color: var(--gold); }
+        .pair-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 6px; }
+        .pair-btn-v2 {
+            padding: 8px 6px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            transition: var(--transition-fast);
+            font-size: 12px;
+        }
+        .pair-btn-v2:hover { border-color: var(--gold); transform: translateY(-1px); }
+        .pair-btn-v2.active { border-color: var(--gold); background: rgba(255,215,0,0.1); }
+        .pair-btn-v2 .pair-name { font-weight: 600; color: var(--text-primary); font-size: 11px; }
+        .pair-btn-v2 .pair-pip { font-size: 10px; color: var(--text-muted); }
+        .pair-btn-v2.gold-pair { border-color: rgba(255,215,0,0.3); }
+
+        /* === RESULT CARDS V2 === */
+        .result-hero-v2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .result-main-v2 {
+            background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.02) 100%);
+            border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+        .result-main-v2 .big-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .result-main-v2 .big-value { font-size: 42px; font-weight: 700; background: linear-gradient(135deg, var(--gold), #fff5b0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+        .result-main-v2 .big-unit { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
+        .result-sub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .result-sub-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+        .result-sub-card .sub-label { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+        .result-sub-card .sub-value { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+        .result-sub-card .sub-value.gold { color: var(--gold); }
+        .result-sub-card .sub-value.bullish { color: var(--bullish); }
+        .result-sub-card .sub-value.bearish { color: var(--bearish); }
+
+        /* === LOADING STATE === */
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10,14,23,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        .loading-box {
+            background: var(--bg-card);
+            border: 1px solid var(--gold);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            min-width: 280px;
+        }
+        .loading-spinner { font-size: 40px; animation: spin 1.5s linear infinite; display: block; margin-bottom: 12px; }
+        .loading-text { color: var(--text-secondary); font-size: 14px; }
+        .loading-bar { height: 3px; background: var(--bg-input); border-radius: 2px; margin-top: 12px; overflow: hidden; }
+        .loading-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-dark)); border-radius: 2px; animation: loading-bar 1.5s ease-in-out infinite; }
+        @keyframes loading-bar { 0% { width: 0%; } 50% { width: 80%; } 100% { width: 100%; } }
+
+        /* === MOBILE FIXES === */
+        @media (max-width: 768px) {
+            .calc-layout { gap: 16px; }
+            .atr-grid { grid-template-columns: repeat(2, 1fr); }
+            .result-hero-v2 { grid-template-columns: 1fr; }
+            .pair-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay" style="display:none;">
+        <div class="loading-box">
+            <div class="loading-spinner">⚙️</div>
+            <div class="loading-text" id="loading-text">กำลังดึงข้อมูลราคา...</div>
+            <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+        </div>
+    </div>
 
+    <div class="container">
         <!-- Header -->
         <header class="header">
             <div class="header-top">
                 <div class="logo">
                     <div class="logo-icon">📐</div>
                     <div class="logo-text">
-                        <h1>Trading Calculator</h1>
-                        <p>คำนวณ Position Size, Lot และ Risk/Reward อย่างแม่นยำ</p>
+                        <h1>Trading Calculator Pro</h1>
+                        <p>คำนวณ Position Size ด้วย ATR Risk Management | Live FMP Data</p>
                     </div>
                 </div>
                 <div class="header-badge">
                     <span class="badge badge-gold">
                         <span class="status-dot gold"></span>
-                        Trading Tools
+                        Live Data
                     </span>
                 </div>
+            </div>
+
+            <!-- Live Price Ticker -->
+            <div class="price-ticker" id="price-ticker">
+                <!-- Populated by JS -->
+                <span style="color:var(--text-muted);font-size:12px;">กำลังโหลดราคา...</span>
             </div>
         </header>
 
@@ -46,7 +299,7 @@
                         <div class="input-group">
                             <label>ยอดเงินต้น (Balance)</label>
                             <div class="input-with-unit">
-                                <input type="number" id="balance" value="10000" min="0" step="100" style="letter-spacing:1px" placeholder="10000">
+                                <input type="number" id="balance" value="10000" min="0" step="100" placeholder="10000">
                                 <select id="account-currency">
                                     <option value="USD">USD</option>
                                     <option value="THB">THB</option>
@@ -90,14 +343,14 @@
                             </div>
                         </div>
                         <div class="input-group hidden" id="risk-amount-group">
-                            <label>ยอมรับความเสี่ยง (Risk Amount)</label>
+                            <label>ยอมรับความเสี่ยง (Amount)</label>
                             <div class="input-with-unit">
                                 <input type="number" id="risk-amount" value="200" min="0" step="1">
                                 <span class="unit" id="risk-currency-label">USD</span>
                             </div>
                         </div>
                         <div class="input-group">
-                            <label>ผลตอบแทนต่อความเสี่ยง (Risk : Reward)</label>
+                            <label>Risk : Reward Ratio</label>
                             <div class="rr-selector">
                                 <button class="rr-btn" onclick="setRR(1)">1:1</button>
                                 <button class="rr-btn" onclick="setRR(2)">1:2</button>
@@ -112,57 +365,156 @@
                 <!-- Pair & Price Section -->
                 <div class="input-section">
                     <h3 class="section-title">📈 คู่เงิน & ราคา (Pair & Prices)</h3>
-                    <div class="input-group full-width">
-                        <label>คู่เงิน (Currency Pair)</label>
-                        <div class="pair-selector">
-                            <div class="pair-category">
-                                <span class="pair-cat-label">🏠 Majors</span>
-                                <div class="pair-buttons">
-                                    <button class="pair-btn active" data-pair="EURUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">EUR/USD</button>
-                                    <button class="pair-btn" data-pair="GBPUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">GBP/USD</button>
-                                    <button class="pair-btn" data-pair="USDJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">USD/JPY</button>
-                                    <button class="pair-btn" data-pair="USDCHF" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">USD/CHF</button>
-                                    <button class="pair-btn" data-pair="AUDUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">AUD/USD</button>
-                                    <button class="pair-btn" data-pair="USDCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">USD/CAD</button>
-                                    <button class="pair-btn" data-pair="NZDUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">NZD/USD</button>
-                                </div>
-                            </div>
-                            <div class="pair-category">
-                                <span class="pair-cat-label">💠 Minors / Crosses</span>
-                                <div class="pair-buttons">
-                                    <button class="pair-btn" data-pair="XAUUSD" data-pip="0.01" data-unit="100" onclick="selectPair(this)">XAU/USD 🟡</button>
-                                    <button class="pair-btn" data-pair="EURGBP" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">EUR/GBP</button>
-                                    <button class="pair-btn" data-pair="EURJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">EUR/JPY</button>
-                                    <button class="pair-btn" data-pair="GBPJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">GBP/JPY</button>
-                                    <button class="pair-btn" data-pair="AUDJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">AUD/JPY</button>
-                                    <button class="pair-btn" data-pair="EURAUD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">EUR/AUD</button>
-                                    <button class="pair-btn" data-pair="GBPAUD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">GBP/AUD</button>
-                                    <button class="pair-btn" data-pair="GBPCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">GBP/CAD</button>
-                                    <button class="pair-btn" data-pair="GBPNZD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">GBP/NZD</button>
-                                    <button class="pair-btn" data-pair="NZDJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">NZD/JPY</button>
-                                    <button class="pair-btn" data-pair="AUDCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">AUD/CAD</button>
-                                    <button class="pair-btn" data-pair="AUDCHF" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">AUD/CHF</button>
-                                    <button class="pair-btn" data-pair="CADJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">CAD/JPY</button>
-                                    <button class="pair-btn" data-pair="CHFJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">CHF/JPY</button>
-                                    <button class="pair-btn" data-pair="EURCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">EUR/CAD</button>
-                                    <button class="pair-btn" data-pair="EURNZD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">EUR/NZD</button>
-                                    <button class="pair-btn" data-pair="EURCHF" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">EUR/CHF</button>
-                                    <button class="pair-btn" data-pair="CADCHF" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">CAD/CHF</button>
-                                </div>
-                            </div>
+                    
+                    <!-- Pair Info Bar -->
+                    <div class="pair-info-bar">
+                        <div class="pair-info-item">
+                            <span class="pair-info-label">ราคาปัจจุบัน</span>
+                            <span class="pair-info-value live" id="live-price">--</span>
+                        </div>
+                        <div class="pair-info-divider"></div>
+                        <div class="pair-info-item">
+                            <span class="pair-info-label">Spread</span>
+                            <span class="pair-info-value" id="spread-value">--</span>
+                        </div>
+                        <div class="pair-info-divider"></div>
+                        <div class="pair-info-item">
+                            <span class="pair-info-label">Pip Size</span>
+                            <span class="pair-info-value" id="pip-size-display">0.0001</span>
+                        </div>
+                        <div class="pair-info-divider"></div>
+                        <div class="pair-info-item">
+                            <span class="pair-info-label">จำนวนต่อ Lot</span>
+                            <span class="pair-info-value" id="unit-display">100,000</span>
                         </div>
                     </div>
+
+                    <!-- Pair Tabs -->
+                    <div class="pair-tabs">
+                        <button class="pair-tab active" onclick="showPairTab('majors')">🏠 Majors</button>
+                        <button class="pair-tab" onclick="showPairTab('minors')">💠 Minors</button>
+                        <button class="pair-tab" onclick="showPairTab('metals')">🟡 Metals/Crypto</button>
+                    </div>
+
+                    <!-- Pair Selector -->
+                    <div id="pair-majors" class="pair-grid">
+                        <div class="pair-btn-v2 active" data-pair="EURUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">
+                            <div class="pair-name">EUR/USD</div>
+                            <div class="pair-pip">0.0001</div>
+                        </div>
+                        <div class="pair-btn-v2" data-pair="GBPUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">
+                            <div class="pair-name">GBP/USD</div>
+                            <div class="pair-pip">0.0001</div>
+                        </div>
+                        <div class="pair-btn-v2" data-pair="USDJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">
+                            <div class="pair-name">USD/JPY</div>
+                            <div class="pair-pip">0.01</div>
+                        </div>
+                        <div class="pair-btn-v2" data-pair="USDCHF" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">
+                            <div class="pair-name">USD/CHF</div>
+                            <div class="pair-pip">0.0001</div>
+                        </div>
+                        <div class="pair-btn-v2" data-pair="AUDUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">
+                            <div class="pair-name">AUD/USD</div>
+                            <div class="pair-pip">0.0001</div>
+                        </div>
+                        <div class="pair-btn-v2" data-pair="USDCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">
+                            <div class="pair-name">USD/CAD</div>
+                            <div class="pair-pip">0.0001</div>
+                        </div>
+                        <div class="pair-btn-v2" data-pair="NZDUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">
+                            <div class="pair-name">NZD/USD</div>
+                            <div class="pair-pip">0.0001</div>
+                        </div>
+                        <div class="pair-btn-v2" data-pair="XAUUSD" data-pip="0.01" data-unit="100" onclick="selectPair(this)">
+                            <div class="pair-name">XAU/USD</div>
+                            <div class="pair-pip">0.01</div>
+                        </div>
+                    </div>
+                    <div id="pair-minors" class="pair-grid" style="display:none;">
+                        <div class="pair-btn-v2" data-pair="EURGBP" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">EUR/GBP</div><div class="pair-pip">0.0001</div></div>
+                        <div class="pair-btn-v2" data-pair="EURJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">EUR/JPY</div><div class="pair-pip">0.01</div></div>
+                        <div class="pair-btn-v2" data-pair="GBPJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">GBP/JPY</div><div class="pair-pip">0.01</div></div>
+                        <div class="pair-btn-v2" data-pair="AUDJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">AUD/JPY</div><div class="pair-pip">0.01</div></div>
+                        <div class="pair-btn-v2" data-pair="EURAUD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">EUR/AUD</div><div class="pair-pip">0.0001</div></div>
+                        <div class="pair-btn-v2" data-pair="GBPAUD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">GBP/AUD</div><div class="pair-pip">0.0001</div></div>
+                        <div class="pair-btn-v2" data-pair="GBPCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">GBP/CAD</div><div class="pair-pip">0.0001</div></div>
+                        <div class="pair-btn-v2" data-pair="GBPNZD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">GBP/NZD</div><div class="pair-pip">0.0001</div></div>
+                        <div class="pair-btn-v2" data-pair="NZDJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">NZD/JPY</div><div class="pair-pip">0.01</div></div>
+                        <div class="pair-btn-v2" data-pair="AUDCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">AUD/CAD</div><div class="pair-pip">0.0001</div></div>
+                        <div class="pair-btn-v2" data-pair="AUDCHF" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">AUD/CHF</div><div class="pair-pip">0.0001</div></div>
+                        <div class="pair-btn-v2" data-pair="CADJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">CAD/JPY</div><div class="pair-pip">0.01</div></div>
+                        <div class="pair-btn-v2" data-pair="CHFJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">CHF/JPY</div><div class="pair-pip">0.01</div></div>
+                        <div class="pair-btn-v2" data-pair="EURCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">EUR/CAD</div><div class="pair-pip">0.0001</div></div>
+                        <div class="pair-btn-v2" data-pair="EURNZD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">EUR/NZD</div><div class="pair-pip">0.0001</div></div>
+                        <div class="pair-btn-v2" data-pair="EURCHF" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><div class="pair-name">EUR/CHF</div><div class="pair-pip">0.0001</div></div>
+                    </div>
+                    <div id="pair-metals" class="pair-grid" style="display:none;">
+                        <div class="pair-btn-v2 gold-pair" data-pair="XAUUSD" data-pip="0.01" data-unit="100" onclick="selectPair(this)"><div class="pair-name">XAU/USD</div><div class="pair-pip">0.01 (Gold)</div></div>
+                        <div class="pair-btn-v2" data-pair="BTCUSD" data-pip="0.01" data-unit="1" onclick="selectPair(this)"><div class="pair-name">BTC/USD</div><div class="pair-pip">0.01</div></div>
+                    </div>
+                </div>
+
+                <!-- ATR Panel -->
+                <div class="atr-panel" id="atr-panel">
+                    <div class="atr-header">
+                        <span class="atr-title">📊 ATR Volatility Analysis</span>
+                        <span class="atr-badge" id="atr-vol-badge">Loading...</span>
+                    </div>
+                    <div class="atr-grid">
+                        <div class="atr-stat">
+                            <div class="atr-stat-label">ATR(14)</div>
+                            <div class="atr-stat-value" id="atr-value">--</div>
+                            <div class="atr-stat-sub" id="atr-timeframe">15min</div>
+                        </div>
+                        <div class="atr-stat">
+                            <div class="atr-stat-label">ATR(% Price)</div>
+                            <div class="atr-stat-value" id="atr-pct">--</div>
+                            <div class="atr-stat-sub">Volatility</div>
+                        </div>
+                        <div class="atr-stat">
+                            <div class="atr-stat-label">Daily ATR</div>
+                            <div class="atr-stat-value" id="atr-daily">--</div>
+                            <div class="atr-stat-sub">Est.</div>
+                        </div>
+                        <div class="atr-stat">
+                            <div class="atr-stat-label">Percentile</div>
+                            <div class="atr-stat-value" id="atr-percentile">--</div>
+                            <div class="atr-stat-sub">14-bar rank</div>
+                        </div>
+                    </div>
+                    <div class="atr-sl-recommendation">
+                        <div>
+                            <div class="atr-sl-label">💡 แนะนำ SL (1× ATR)</div>
+                            <div class="atr-sl-pips" id="atr-sl-pips-text">ระยะ SL แนะนำตามความผันผวนปัจจุบัน</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="atr-sl-value" id="atr-sl-value">--</div>
+                            <div class="atr-sl-pips" id="atr-sl-pips-val">-- pips</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Inputs -->
+                <div class="input-section">
+                    <h3 class="section-title">🎯 ราคาเข้า/Stop/TP</h3>
                     <div class="input-grid">
                         <div class="input-group">
-                            <label>ราคาปัจจุบัน / เข้า (Entry Price)</label>
-                            <input type="number" id="entry-price" value="1.0950" min="0" step="0.00001">
+                            <label>ราคาเข้า (Entry Price)</label>
+                            <div class="input-with-suggest">
+                                <input type="number" id="entry-price" value="1.0950" min="0" step="0.00001">
+                                <button class="input-suggest-btn" onclick="fillEntryFromLive()" title="ใช้ราคาปัจจุบัน">Live ↗</button>
+                            </div>
                         </div>
                         <div class="input-group">
-                            <label>จุดสต็อปลอส (Stop Loss)</label>
-                            <input type="number" id="sl-price" value="1.0900" min="0" step="0.00001">
+                            <label>Stop Loss</label>
+                            <div class="input-with-suggest">
+                                <input type="number" id="sl-price" value="1.0900" min="0" step="0.00001">
+                                <button class="input-suggest-btn" onclick="fillSLFromATR()" title="ใช้ ATR แนะนำ">ATR ↗</button>
+                            </div>
                         </div>
                         <div class="input-group">
-                            <label>จุดเทคโพรฟิต (Take Profit)</label>
+                            <label>Take Profit</label>
                             <input type="number" id="tp-price" value="1.1050" min="0" step="0.00001">
                         </div>
                         <div class="input-group">
@@ -187,21 +539,29 @@
                     <h2>ผลลัพธ์การคำนวณ</h2>
                 </div>
 
-                <!-- Main Result Cards -->
-                <div class="result-hero">
-                    <div class="result-main-card">
-                        <div class="result-label">ขนาดล็อตที่แนะนำ</div>
-                        <div class="result-value" id="lot-size">0.00</div>
-                        <div class="result-unit">Lots</div>
+                <!-- Hero Results -->
+                <div class="result-hero-v2">
+                    <div class="result-main-v2">
+                        <div class="big-label">ขนาดล็อตที่แนะนำ</div>
+                        <div class="big-value" id="lot-size">0.00</div>
+                        <div class="big-unit">Lots</div>
                     </div>
-                    <div class="result-side-cards">
-                        <div class="mini-card">
-                            <div class="mini-label">ความเสี่ยงต่อครั้ง</div>
-                            <div class="mini-value" id="risk-value">$0.00</div>
+                    <div class="result-sub-grid">
+                        <div class="result-sub-card">
+                            <div class="sub-label">ความเสี่ยงต่อครั้ง</div>
+                            <div class="sub-value gold" id="risk-value">$0.00</div>
                         </div>
-                        <div class="mini-card">
-                            <div class="mini-label">Risk : Reward</div>
-                            <div class="mini-value" id="rr-ratio">1 : 3.00</div>
+                        <div class="result-sub-card">
+                            <div class="sub-label">Risk : Reward</div>
+                            <div class="sub-value" id="rr-ratio">1 : 3.00</div>
+                        </div>
+                        <div class="result-sub-card">
+                            <div class="sub-label">กำไรที่ TP</div>
+                            <div class="sub-value bullish" id="profit-result">$0.00</div>
+                        </div>
+                        <div class="result-sub-card">
+                            <div class="sub-label">ขาดทุนที่ SL</div>
+                            <div class="sub-value bearish" id="loss-result">-$0.00</div>
                         </div>
                     </div>
                 </div>
@@ -211,21 +571,21 @@
                     <div class="result-card">
                         <div class="result-card-icon">💵</div>
                         <div class="result-card-content">
-                            <div class="result-card-label">Risk Amount (จำนวนเงินที่เสี่ยง)</div>
+                            <div class="result-card-label">Risk Amount</div>
                             <div class="result-card-value" id="risk-amount-result">$0.00</div>
                         </div>
                     </div>
                     <div class="result-card">
                         <div class="result-card-icon">📈</div>
                         <div class="result-card-content">
-                            <div class="result-card-label">Position Size (ขนาดสถานะ)</div>
+                            <div class="result-card-label">Position Size</div>
                             <div class="result-card-value" id="position-size-result">0 Units</div>
                         </div>
                     </div>
                     <div class="result-card">
                         <div class="result-card-icon">🎯</div>
                         <div class="result-card-content">
-                            <div class="result-card-label">Pip Value per Lot</div>
+                            <div class="result-card-label">Pip Value / Lot</div>
                             <div class="result-card-value" id="pip-value-result">$0.00/lot</div>
                         </div>
                     </div>
@@ -244,20 +604,6 @@
                         </div>
                     </div>
                     <div class="result-card">
-                        <div class="result-card-icon">💰</div>
-                        <div class="result-card-content">
-                            <div class="result-card-label">Estimated Profit at TP</div>
-                            <div class="result-card-value" id="profit-result">$0.00</div>
-                        </div>
-                    </div>
-                    <div class="result-card">
-                        <div class="result-card-icon">📉</div>
-                        <div class="result-card-content">
-                            <div class="result-card-label">Estimated Loss at SL</div>
-                            <div class="result-card-value" id="loss-result">$0.00</div>
-                        </div>
-                    </div>
-                    <div class="result-card">
                         <div class="result-card-icon">🏦</div>
                         <div class="result-card-content">
                             <div class="result-card-label">Margin Required</div>
@@ -267,7 +613,7 @@
                     <div class="result-card">
                         <div class="result-card-icon">⚖️</div>
                         <div class="result-card-content">
-                            <div class="result-card-label">Risk : Reward Ratio</div>
+                            <div class="result-card-label">R:R Ratio</div>
                             <div class="result-card-value" id="rr-detail-result">1 : 3.00</div>
                         </div>
                     </div>
@@ -289,7 +635,6 @@
                         </div>
                         <div class="risk-bar">
                             <div class="risk-bar-fill" id="risk-bar-fill" style="width: 0%"></div>
-                            <div class="risk-bar-marker" id="risk-bar-marker"></div>
                         </div>
                         <div class="risk-bar-labels">
                             <span>0%</span>
@@ -304,19 +649,17 @@
 
                 <!-- Quick Reference Table -->
                 <div class="quick-ref">
-                    <h3 class="section-title">📋 Lot Size Reference Table</h3>
+                    <h3 class="section-title">📋 Lot Size Reference</h3>
                     <table class="ref-table">
                         <thead>
                             <tr>
-                                <th>Lot Size</th>
+                                <th>Lot</th>
                                 <th>Units</th>
-                                <th>Pip Value (std)</th>
-                                <th>$ Risk at 100 pip</th>
+                                <th>Pip Value</th>
+                                <th>$ Risk @ 100pips</th>
                             </tr>
                         </thead>
-                        <tbody id="lot-ref-body">
-                            <!-- populated by JS -->
-                        </tbody>
+                        <tbody id="lot-ref-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -324,8 +667,8 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>📐 Trading Calculator | Developed by Nong Her | Ocean Ten HQ</p>
-            <p>⚠️ ข้อมูลนี้เพื่อการศึกษาเท่านั้น ไม่ใช่คำแนะนำทางการเงิน</p>
+            <p>📐 Trading Calculator Pro | Nong Her | Ocean Ten HQ</p>
+            <p>⚠️ ข้อมูลนี้เพื่อการศึกษาเท่านั้น ไม่ใช่คำแนะนำทางการเงิน | Data: Financial Modeling Prep</p>
         </footer>
     </div>
 
