@@ -140,21 +140,21 @@ body {
     border-radius: 8px;
     overflow: hidden;
     background: #0d1321;
-    min-height: 52px; /* Taller for touch */
+    min-height: 52px;
 }
 .input-with-unit input {
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
+    width: 100%;
     background: transparent;
     border: none !important;
     border-radius: 0;
     padding: 14px 16px;
     font-size: 18px !important;
     font-weight: 600;
-    color: #FFD700 !important; /* Gold text for balance */
+    color: #FFD700 !important;
     caret-color: #FFD700;
-    letter-spacing: 0.5px;
-    height: 100%;
+    letter-spacing: 1px;
 }
 .input-with-unit input:focus {
     outline: none;
@@ -168,22 +168,21 @@ body {
 .input-with-unit input {
     -moz-appearance: textfield;
 }
+/* Currency selector - compact, takes only needed space */
 .input-with-unit select {
+    flex: 0 0 auto;
     background: #1a2338;
     border: none !important;
     border-left: 1px solid #334155 !important;
     border-radius: 0;
-    padding: 14px 12px;
-    font-size: 15px;
+    padding: 14px 10px;
+    font-size: 14px;
     font-weight: 600;
-    color: #FFD700;
+    color: #94a3b8;
     cursor: pointer;
     white-space: nowrap;
-    min-width: 70px;
-}
-.input-with-unit select:focus {
-    outline: none;
-    background: #1f2a40;
+    min-width: unset;
+    width: auto;
 }
 
 /* ================================================
