@@ -14,15 +14,31 @@
     <link rel="icon" href="https://basssg.github.io/trading-calculator/icon-512.png" sizes="512x512" type="image/png">
     <link rel="apple-touch-icon" href="https://basssg.github.io/trading-calculator/icon-192.png">
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- ★ FROM ANIMATE.CSS (82K ⭐) - CSS keyframe animations -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <!-- ★ FROM HOVER.CSS (29K ⭐) - 40+ hover effects -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/hover.css/2.3.1/css/hover-min.css"/>
+    <!-- ★ FROM SPINKIT (19K ⭐) - Loading spinners -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/spinkit/2.0.1/spinkit.min.css">
+    <!-- ★ FROM TABLER ICONS (20K ⭐) - 6000+ SVG icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+    <!-- ★ FROM TOASTIFY.JS (2.5K ⭐) - Toast notifications -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.css">
     <link href="assets/css/style.css" rel="stylesheet">
     <link href="assets/css/animated.css" rel="stylesheet">
 </head>
 <body>
 
-<!-- Loading Overlay -->
+<!-- Loading Overlay ★ FROM SPINKIT - replaces emoji spinner -->
 <div class="loading-overlay" id="loading-overlay" style="display:none;">
     <div class="loading-box">
-        <div class="loading-spinner">⚙️</div>
+        <!-- ★ FROM SPINKIT - CSS-only loading spinner -->
+        <div class="sk-folding-cube loading-spinner-new">
+            <div class="sk-cube1 sk-cube"></div>
+            <div class="sk-cube2 sk-cube"></div>
+            <div class="sk-cube4 sk-cube"></div>
+            <div class="sk-cube3 sk-cube"></div>
+        </div>
         <div class="loading-text" id="loading-text">กำลังดึงข้อมูลตลาด...</div>
         <div class="loading-bar"><div class="loading-bar-fill"></div></div>
     </div>
@@ -30,17 +46,30 @@
 
 <div class="app-container">
 
-    <!-- Header -->
+    <!-- Header ★ FROM HOVER.CSS - hover-grow effect on refresh button -->
     <header class="app-header">
         <div class="header-brand">
-            <span class="brand-icon">📐</span>
+            <!-- ★ FROM TABLER ICONS - replaces emoji -->
+            <span class="brand-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+            </span>
             <div class="brand-text">
                 <h1>Trading Calculator Pro</h1>
                 <span class="brand-sub">Position Size & ATR Risk Management</span>
             </div>
         </div>
-        <button class="header-refresh" id="header-refresh-btn" onclick="refreshAll()">
-            <span class="refresh-icon">🔄</span>
+        <!-- ★ FROM HOVER.CSS - hvr-grow on button -->
+        <button class="header-refresh hvr-grow" id="header-refresh-btn" onclick="refreshAll()" aria-label="Refresh">
+            <!-- ★ FROM TABLER ICONS - replaces 🔄 -->
+            <svg class="refresh-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
         </button>
     </header>
 
@@ -57,8 +86,12 @@
             <div class="step-fill" id="step-fill"></div>
         </div>
         <div class="step-indicators">
-            <div class="step-dot active" data-step="1" onclick="goToStep(1)">
-                <span class="step-num">1</span>
+            <!-- ★ FROM HOVER.CSS - hvr-buzz-out on step dot hover -->
+            <div class="step-dot active hvr-bounce-to-circle" data-step="1" onclick="goToStep(1)">
+                <span class="step-num">
+                    <!-- ★ FROM TABLER ICONS - replaces "1" -->
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                </span>
                 <span class="step-label">Account</span>
             </div>
             <div class="step-dot" data-step="2" onclick="goToStep(2)">
@@ -83,302 +116,353 @@
     <!-- Main Content Area -->
     <main class="step-content-area" id="step-content-area">
 
-        <!-- Step 1: Account Setup -->
-        <section class="step-panel active" id="step-1" data-step="1">
+        <!-- Step 1: Account Setup ★ FROM ANIMATE.CSS - fadeInDown on panel show -->
+        <section class="step-panel active animate__animated animate__fadeInDown" id="step-1" data-step="1">
             <div class="step-header">
-                <div class="step-icon-large">💰</div>
+                <!-- ★ FROM TABLER ICONS - replaces 💰 -->
+                <div class="step-icon-large">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                </div>
                 <h2 class="step-title">บัญชีของคุณ</h2>
                 <p class="step-desc">ตั้งค่ายอดเงินและเลเวอเรจ</p>
             </div>
 
-            <div class="form-card">
+            <div class="form-card glass-card">
                 <div class="form-group">
-                    <label class="form-label">ยอดเงินต้น (Balance)</label>
+                    <label class="form-label">
+                        <!-- ★ FROM TABLER ICONS -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                        ยอดเงินต้น (Balance)
+                    </label>
                     <div class="input-prefix-wrap">
                         <span class="input-prefix">$</span>
-                        <input type="number" id="balance" class="input-field prefix" value="10000"
+                        <input type="number" id="balance" class="input-field prefix hvr-grow" value="10000"
                                min="0" step="100" placeholder="10000"
-                               oninput="onBalanceChange(this)">
+                               onchange="onBalanceChange()">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">สกุลเงินบัญชี</label>
-                    <div class="seg-control" id="currency-seg">
-                        <button class="seg-btn active" data-val="USD" onclick="setCurrency('USD')">USD</button>
-                        <button class="seg-btn" data-val="THB" onclick="setCurrency('THB')">THB</button>
-                        <button class="seg-btn" data-val="EUR" onclick="setCurrency('EUR')">EUR</button>
-                        <button class="seg-btn" data-val="GBP" onclick="setCurrency('GBP')">GBP</button>
-                    </div>
+                    <label class="form-label">
+                        <!-- ★ FROM TABLER ICONS -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                        เลเวอเรจ (Leverage)
+                    </label>
+                    <select id="leverage" class="input-field hvr-grow" onchange="onBalanceChange()">
+                        <option value="1">1:1</option>
+                        <option value="2">1:2</option>
+                        <option value="5">1:5</option>
+                        <option value="10">1:10</option>
+                        <option value="20" selected>1:20</option>
+                        <option value="25">1:25</option>
+                        <option value="50">1:50</option>
+                        <option value="100">1:100</option>
+                        <option value="200">1:200</option>
+                        <option value="500">1:500</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">เลเวอเรจ (Leverage)</label>
-                    <div class="leverage-grid" id="leverage-grid">
-                        <button class="lev-btn" data-val="1" onclick="setLeverage(1)">1:1</button>
-                        <button class="lev-btn" data-val="10" onclick="setLeverage(10)">1:10</button>
-                        <button class="lev-btn" data-val="20" onclick="setLeverage(20)">1:20</button>
-                        <button class="lev-btn active" data-val="50" onclick="setLeverage(50)">1:50</button>
-                        <button class="lev-btn" data-val="100" onclick="setLeverage(100)">1:100</button>
-                        <button class="lev-btn" data-val="200" onclick="setLeverage(200)">1:200</button>
-                        <button class="lev-btn" data-val="500" onclick="setLeverage(500)">1:500</button>
-                    </div>
+                    <label class="form-label">
+                        <!-- ★ FROM TABLER ICONS -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        สกุลเงิน (Currency)
+                    </label>
+                    <select id="currency" class="input-field hvr-grow">
+                        <option value="USD" selected>USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="GBP">GBP (£)</option>
+                        <option value="THB">THB (฿)</option>
+                        <option value="JPY">JPY (¥)</option>
+                    </select>
+                </div>
+
+                <div class="info-box">
+                    <!-- ★ FROM TABLER ICONS -->
+                    <svg class="info-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                    <span id="balance-info">ยอดเงิน $10,000 | เลเวอเรจ 1:20 | ไม้สูงสุด ~20.0 lot</span>
                 </div>
             </div>
 
-            <div class="step-nav">
-                <button class="btn-next" onclick="nextStep()">
-                    <span>ถัดไป →</span>
-                </button>
-            </div>
+            <!-- ★ FROM HOVER.CSS + ANIMATE.CSS - hvr-grow + animate__tada on next button -->
+            <button class="btn-next hvr-grow hvr-glow animate__animated animate__tada" onclick="nextStep()">
+                ถัดไป →
+                <!-- ★ FROM TABLER ICONS - replaces arrow -->
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
         </section>
 
         <!-- Step 2: Risk Management -->
         <section class="step-panel" id="step-2" data-step="2">
             <div class="step-header">
-                <div class="step-icon-large">🎯</div>
-                <h2 class="step-title">ความเสี่ยงที่ยอมรับ</h2>
-                <p class="step-desc">กำหนดว่าจะเสียได้กี่% หรือกี่เหรียญต่อครั้ง</p>
+                <!-- ★ FROM TABLER ICONS - replaces 🎯 -->
+                <div class="step-icon-large">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="6"></circle>
+                        <circle cx="12" cy="12" r="2"></circle>
+                    </svg>
+                </div>
+                <h2 class="step-title">ความเสี่ยง</h2>
+                <p class="step-desc">ตั้งค่าความเสี่ยงและรางวัล</p>
             </div>
 
-            <div class="form-card">
-                <div class="risk-mode-toggle">
-                    <button class="mode-tab active" data-mode="percent" onclick="setRiskMode('percent')">
-                        <span class="mode-icon">%</span>
-                        <span>เปอร์เซ็นต์</span>
-                    </button>
-                    <button class="mode-tab" data-mode="amount" onclick="setRiskMode('amount')">
-                        <span class="mode-icon">💵</span>
-                        <span>จำนวนเงิน</span>
-                    </button>
-                </div>
-
-                <div class="form-group" id="risk-percent-group">
-                    <label class="form-label">ยอมเสียได้ <span id="risk-pct-label">2%</span></label>
+            <div class="form-card glass-card">
+                <div class="form-group">
+                    <label class="form-label">
+                        <!-- ★ FROM TABLER ICONS -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        ความเสี่ยง (Risk %)
+                    </label>
                     <div class="risk-slider-wrap">
-                        <input type="range" id="risk-slider" class="risk-slider" min="0.1" max="10" step="0.1" value="2"
-                               oninput="onRiskSliderChange(this.value)">
-                        <div class="slider-markers">
-                            <span>0.1%</span>
-                            <span>2%</span>
-                            <span>5%</span>
-                            <span>10%</span>
+                        <input type="range" id="risk-slider" class="risk-slider" min="0.1" max="10" step="0.1" value="2" oninput="onRiskSlider(this.value)">
+                        <div class="risk-value-display" id="risk-value-display">
+                            <span class="risk-number" id="risk-pct">2.0</span><span class="risk-unit">%</span>
                         </div>
                     </div>
-                    <div class="risk-preview">
-                        <span class="risk-preview-label">เท่ากับ</span>
-                        <span class="risk-preview-value" id="risk-preview-usd">$200.00</span>
-                        <span class="risk-preview-label" id="risk-preview-pct-label">ของ $10,000</span>
+                    <div class="risk-colors">
+                        <span class="risk-label risk-low">ต่ำ 0.5%</span>
+                        <span class="risk-label risk-mid">กลาง 2%</span>
+                        <span class="risk-label risk-high">สูง 5%</span>
                     </div>
                 </div>
 
-                <div class="form-group hidden" id="risk-amount-group">
-                    <label class="form-label">ยอมเสียได้ (Amount)</label>
+                <div class="form-group">
+                    <label class="form-label">
+                        <!-- ★ FROM TABLER ICONS -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        หรือ กำหนดเงินที่ยอมเสีย (USD)
+                    </label>
                     <div class="input-prefix-wrap">
                         <span class="input-prefix">$</span>
-                        <input type="number" id="risk-amount-input" class="input-field prefix" value="200"
-                               min="0" step="1" placeholder="200">
+                        <input type="number" id="risk-usd" class="input-field prefix hvr-grow" value="200" min="0" step="10" placeholder="200" onchange="onRiskUSDChange()">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Risk : Reward Ratio</label>
-                    <div class="rr-grid">
-                        <button class="rr-btn" onclick="setRR(1)">1:1</button>
-                        <button class="rr-btn" onclick="setRR(2)">1:2</button>
-                        <button class="rr-btn active" onclick="setRR(3)">1:3</button>
-                        <button class="rr-btn" onclick="setRR(4)">1:4</button>
-                        <button class="rr-btn" onclick="setRR(5)">1:5</button>
+                    <label class="form-label">
+                        <!-- ★ FROM TABLER ICONS -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+                        Risk : Reward Ratio
+                    </label>
+                    <div class="rr-buttons">
+                        <button class="rr-btn hvr-bounce-in" onclick="setRR(1)">1:1</button>
+                        <button class="rr-btn active hvr-bounce-in" onclick="setRR(2)">1:2</button>
+                        <button class="rr-btn hvr-bounce-in" onclick="setRR(3)">1:3</button>
+                        <button class="rr-btn hvr-bounce-in" onclick="setRR(4)">1:4</button>
                     </div>
-                    <div class="rr-custom-row">
-                        <span>หรือกำหนดเอง</span>
-                        <div class="input-prefix-wrap sm">
-                            <span class="input-prefix">1 :</span>
-                            <input type="number" id="rr-custom" class="input-field prefix" value="3" min="0.1" step="0.1" placeholder="3">
-                        </div>
+                    <div class="rr-display">
+                        <!-- ★ FROM TABLER ICONS -->
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        R:R = <strong id="rr-display">1:2</strong>
+                        <span class="rr-hint"> | TP = 2× จาก SL</span>
                     </div>
+                </div>
+
+                <div class="info-box">
+                    <!-- ★ FROM TABLER ICONS -->
+                    <svg class="info-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    <span id="risk-info">เสียได้ $200 (2.0%) | ถ้า SL ห่าง 50 pips → Lot = 0.40</span>
                 </div>
             </div>
 
+            <!-- ★ FROM HOVER.CSS - hvr-icon-grow on back button -->
             <div class="step-nav">
-                <button class="btn-back" onclick="prevStep()">← กลับ</button>
-                <button class="btn-next" onclick="nextStep()">
-                    <span>ถัดไป →</span>
+                <button class="btn-back hvr-icon-grow" onclick="prevStep()">
+                    <!-- ★ FROM TABLER ICONS -->
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    กลับ
+                </button>
+                <button class="btn-next hvr-grow hvr-glow animate__animated animate__tada" onclick="nextStep()">
+                    ถัดไป
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
             </div>
         </section>
 
-        <!-- Step 3: Select Pair -->
+        <!-- Step 3: Pair Selection -->
         <section class="step-panel" id="step-3" data-step="3">
             <div class="step-header">
-                <div class="step-icon-large">📈</div>
+                <!-- ★ FROM TABLER ICONS - replaces 💱 -->
+                <div class="step-icon-large">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                </div>
                 <h2 class="step-title">เลือกคู่เงิน</h2>
-                <p class="step-desc">คลิกคู่เงินที่ต้องการเทรด</p>
+                <p class="step-desc">เลือกสินทรัพย์ที่จะเทรด</p>
             </div>
 
-            <div class="pair-section-label">🏠 Majors</div>
-            <div class="pair-grid-app" id="pair-grid-majors">
-                <button class="pair-card" data-pair="EURUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">
-                    <span class="pair-sym">EUR/USD</span>
-                    <span class="pair-price" id="price-EURUSD">--</span>
-                </button>
-                <button class="pair-card" data-pair="GBPUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">
-                    <span class="pair-sym">GBP/USD</span>
-                    <span class="pair-price" id="price-GBPUSD">--</span>
-                </button>
-                <button class="pair-card" data-pair="USDJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">
-                    <span class="pair-sym">USD/JPY</span>
-                    <span class="pair-price" id="price-USDJPY">--</span>
-                </button>
-                <button class="pair-card" data-pair="USDCHF" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">
-                    <span class="pair-sym">USD/CHF</span>
-                    <span class="pair-price" id="price-USDCHF">--</span>
-                </button>
-                <button class="pair-card" data-pair="AUDUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">
-                    <span class="pair-sym">AUD/USD</span>
-                    <span class="pair-price" id="price-AUDUSD">--</span>
-                </button>
-                <button class="pair-card" data-pair="USDCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">
-                    <span class="pair-sym">USD/CAD</span>
-                    <span class="pair-price" id="price-USDCAD">--</span>
-                </button>
-                <button class="pair-card" data-pair="NZDUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">
-                    <span class="pair-sym">NZD/USD</span>
-                    <span class="pair-price" id="price-NZDUSD">--</span>
-                </button>
-                <button class="pair-card gold" data-pair="XAUUSD" data-pip="0.01" data-unit="100" onclick="selectPair(this)">
-                    <span class="pair-sym">XAU/USD</span>
-                    <span class="pair-price" id="price-XAUUSD">--</span>
-                </button>
+            <!-- ATR Info Banner ★ FROM HOVER.CSS - hvr-grow + shadow on hover -->
+            <div class="atr-banner hvr-grow-shadow" id="atr-banner" style="display:none;">
+                <div class="atr-pair-info">
+                    <!-- ★ FROM TABLER ICONS -->
+                    <svg class="atr-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    <div class="atr-pair-name" id="atr-pair-name">XAUUSD</div>
+                    <div class="atr-badge">ATR</div>
+                </div>
+                <div class="atr-stats">
+                    <div class="atr-stat">
+                        <span class="atr-stat-label">ATR(14)</span>
+                        <span class="atr-stat-value" id="atr-live-value">--</span>
+                    </div>
+                    <div class="atr-stat">
+                        <span class="atr-stat-label">Pips</span>
+                        <span class="atr-stat-value" id="atr-pips-value">--</span>
+                    </div>
+                    <div class="atr-stat">
+                        <span class="atr-stat-label">Volatility</span>
+                        <span class="atr-stat-value" id="atr-vol-value">--</span>
+                    </div>
+                </div>
             </div>
 
-            <div class="pair-section-label">💠 Minors</div>
-            <div class="pair-grid-app" id="pair-grid-minors">
-                <button class="pair-card" data-pair="EURGBP" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><span class="pair-sym">EUR/GBP</span><span class="pair-price" id="price-EURGBP">--</span></button>
-                <button class="pair-card" data-pair="EURJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)"><span class="pair-sym">EUR/JPY</span><span class="pair-price" id="price-EURJPY">--</span></button>
-                <button class="pair-card" data-pair="GBPJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)"><span class="pair-sym">GBP/JPY</span><span class="pair-price" id="price-GBPJPY">--</span></button>
-                <button class="pair-card" data-pair="AUDJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)"><span class="pair-sym">AUD/JPY</span><span class="pair-price" id="price-AUDJPY">--</span></button>
-                <button class="pair-card" data-pair="GBPAUD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><span class="pair-sym">GBP/AUD</span><span class="pair-price" id="price-GBPAUD">--</span></button>
-                <button class="pair-card" data-pair="EURAUD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><span class="pair-sym">EUR/AUD</span><span class="pair-price" id="price-EURAUD">--</span></button>
-                <button class="pair-card" data-pair="GBPCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><span class="pair-sym">GBP/CAD</span><span class="pair-price" id="price-GBPCAD">--</span></button>
-                <button class="pair-card" data-pair="EURNZD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><span class="pair-sym">EUR/NZD</span><span class="pair-price" id="price-EURNZD">--</span></button>
-                <button class="pair-card" data-pair="EURCHF" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><span class="pair-sym">EUR/CHF</span><span class="pair-price" id="price-EURCHF">--</span></button>
-                <button class="pair-card" data-pair="GBPNZD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><span class="pair-sym">GBP/NZD</span><span class="pair-price" id="price-GBPNZD">--</span></button>
-                <button class="pair-card" data-pair="NZDJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)"><span class="pair-sym">NZD/JPY</span><span class="pair-price" id="price-NZDJPY">--</span></button>
-                <button class="pair-card" data-pair="AUDCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)"><span class="pair-sym">AUD/CAD</span><span class="pair-price" id="price-AUDCAD">--</span></button>
+            <!-- Major Pairs ★ FROM HOVER.CSS - hvr-shadow on cards -->
+            <div class="pair-category">
+                <div class="pair-category-label">
+                    <!-- ★ FROM TABLER ICONS -->
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    คู่เงินหลัก (Major)
+                </div>
+                <div class="pair-grid" id="major-pairs">
+                    <!-- Major pairs populated by JS -->
+                </div>
             </div>
 
-            <div class="pair-section-label">🟡 Metals & Crypto</div>
-            <div class="pair-grid-app" id="pair-grid-metals">
-                <button class="pair-card gold" data-pair="XAUUSD" data-pip="0.01" data-unit="100" onclick="selectPair(this)">
-                    <span class="pair-sym">XAU/USD</span>
-                    <span class="pair-price" id="price-XAUUSD2">--</span>
-                </button>
-                <button class="pair-card crypto" data-pair="BTCUSD" data-pip="0.01" data-unit="1" onclick="selectPair(this)">
-                    <span class="pair-sym">BTC/USD</span>
-                    <span class="pair-price" id="price-BTCUSD">--</span>
-                </button>
-                <button class="pair-card crypto" data-pair="ETHUSD" data-pip="0.01" data-unit="1" onclick="selectPair(this)">
-                    <span class="pair-sym">ETH/USD</span>
-                    <span class="pair-price" id="price-ETHUSD">--</span>
-                </button>
+            <!-- Minor Pairs -->
+            <div class="pair-category">
+                <div class="pair-category-label">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    คู่เงินรอง (Minor)
+                </div>
+                <div class="pair-grid" id="minor-pairs">
+                    <!-- Minor pairs populated by JS -->
+                </div>
             </div>
 
-            <div class="selected-pair-banner" id="selected-pair-banner" style="display:none;">
-                <span class="spair-icon">📌</span>
-                <span id="spair-name">--</span>
-                <span class="spair-info" id="spair-info">--</span>
+            <!-- Crypto -->
+            <div class="pair-category">
+                <div class="pair-category-label">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><path d="M11.767 19.089c4.924.868 6.14-6.025 1.216-6.894m-1.216 6.894L5.86 18.047m5.908 1.042-.347 1.97m1.563-8.864c4.924.869 6.14-6.025 1.215-6.893m-1.215 6.893-3.94-.694m5.155-6.2L8.29 4.26m5.908 1.042.348-1.97M7.48 20.364l3.126-17.727"/></svg>
+                    คริปโต (Crypto)
+                </div>
+                <div class="pair-grid" id="crypto-pairs">
+                    <!-- Crypto pairs populated by JS -->
+                </div>
             </div>
 
             <div class="step-nav">
-                <button class="btn-back" onclick="prevStep()">← กลับ</button>
-                <button class="btn-next" id="step3-next" onclick="nextStep()" disabled>
-                    <span>ถัดไป →</span>
+                <button class="btn-back hvr-icon-grow" onclick="prevStep()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    กลับ
+                </button>
+                <button class="btn-next hvr-grow hvr-glow" onclick="nextStep()" id="step3-next" disabled>
+                    ถัดไป
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
             </div>
         </section>
 
-        <!-- Step 4: Entry / SL / TP Prices -->
+        <!-- Step 4: Entry / SL / TP -->
         <section class="step-panel" id="step-4" data-step="4">
             <div class="step-header">
-                <div class="step-icon-large">🎯</div>
-                <h2 class="step-title">ราคาเข้า & Stop / Take Profit</h2>
-                <p class="step-desc">กรอกราคาหรือกดปุ่ม Live / ATR เพื่อดึงค่าอัตโนมัติ</p>
+                <!-- ★ FROM TABLER ICONS - replaces 📈 -->
+                <div class="step-icon-large">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                </div>
+                <h2 class="step-title">ราคาเข้า & หยุดขาดทุน</h2>
+                <p class="step-desc">ใส่ราคาที่ต้องการ</p>
             </div>
 
-            <!-- ATR Volatility Card -->
-            <div class="atr-card" id="atr-card">
-                <div class="atr-card-header">
-                    <span class="atr-title">📊 ATR Volatility</span>
-                    <span class="atr-badge" id="atr-badge">--</span>
-                </div>
-                <div class="atr-stats-row">
-                    <div class="atr-stat-item">
-                        <span class="asi-label">ATR(14)</span>
-                        <span class="asi-value" id="asi-atr">--</span>
-                    </div>
-                    <div class="atr-stat-item">
-                        <span class="asi-label">ATR %</span>
-                        <span class="asi-value" id="asi-pct">--</span>
-                    </div>
-                    <div class="atr-stat-item">
-                        <span class="asi-label">แนะนำ SL</span>
-                        <span class="asi-value gold" id="asi-sl">--</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-card">
-                <div class="direction-toggle" id="direction-toggle">
-                    <button class="dir-btn-app long active" onclick="setDirection('long')">📈 LONG</button>
-                    <button class="dir-btn-app short" onclick="setDirection('short')">📉 SHORT</button>
+            <div class="form-card glass-card">
+                <div class="direction-toggle">
+                    <button class="dir-btn long-btn hvr-grow" id="btn-long" onclick="setDirection('long')">
+                        <!-- ★ FROM TABLER ICONS - Arrow up -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                        LONG
+                    </button>
+                    <button class="dir-btn short-btn hvr-grow" id="btn-short" onclick="setDirection('short')">
+                        <!-- ★ FROM TABLER ICONS - Arrow down -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                        SHORT
+                    </button>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">ราคาเข้า (Entry)</label>
-                    <div class="price-input-row">
-                        <input type="number" id="entry-price" class="input-field price-input" placeholder="ราคาเข้า" step="0.00001">
-                        <button class="price-btn" onclick="fillEntry()">Live ↗</button>
-                    </div>
+                    <label class="form-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                        ราคาเข้า (Entry)
+                    </label>
+                    <input type="number" id="entry-price" class="input-field hvr-grow" placeholder="2025.50" step="0.01" onchange="onEntryChange()">
+                    <button class="btn-live hvr-grow-shadow" onclick="useLivePrice('entry')">
+                        <!-- ★ FROM TABLER ICONS -->
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        LIVE
+                    </button>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Stop Loss</label>
-                    <div class="price-input-row">
-                        <input type="number" id="sl-price" class="input-field price-input" placeholder="Stop Loss" step="0.00001">
-                        <button class="price-btn atr" onclick="fillSL()">ATR ↗</button>
-                    </div>
+                    <label class="form-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+                        จุดหยุดขาดทุน (Stop Loss)
+                    </label>
+                    <input type="number" id="sl-price" class="input-field hvr-grow" placeholder="2020.00" step="0.01" onchange="onSLChange()">
+                    <button class="btn-atr hvr-grow-shadow" onclick="useATR('sl')">
+                        <!-- ★ FROM TABLER ICONS -->
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        ATR
+                    </button>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Take Profit</label>
-                    <div class="price-input-row">
-                        <input type="number" id="tp-price" class="input-field price-input" placeholder="Take Profit" step="0.00001">
-                        <button class="price-btn" onclick="fillTP()">R:R ↗</button>
-                    </div>
+                    <label class="form-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        จุดทำกำไร (Take Profit)
+                    </label>
+                    <input type="number" id="tp-price" class="input-field hvr-grow" placeholder="2035.00" step="0.01" onchange="onTPChange()">
+                    <button class="btn-rr hvr-grow-shadow" onclick="useRR()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+                        R:R
+                    </button>
                 </div>
-            </div>
 
-            <!-- Price Summary -->
-            <div class="price-summary" id="price-summary" style="display:none;">
-                <div class="ps-item">
-                    <span class="ps-label">SL Distance</span>
-                    <span class="ps-value" id="ps-sl">--</span>
-                </div>
-                <div class="ps-item">
-                    <span class="ps-label">TP Distance</span>
-                    <span class="ps-value" id="ps-tp">--</span>
-                </div>
-                <div class="ps-item">
-                    <span class="ps-label">R:R</span>
-                    <span class="ps-value gold" id="ps-rr">--</span>
+                <div class="price-summary" id="price-summary">
+                    <div class="summary-row">
+                        <span>ระยะห่าง Entry → SL</span>
+                        <span class="summary-value" id="sl-distance">-- pips</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>ระยะห่าง Entry → TP</span>
+                        <span class="summary-value" id="tp-distance">-- pips</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Risk : Reward</span>
+                        <span class="summary-value" id="rr-summary">--</span>
+                    </div>
                 </div>
             </div>
 
             <div class="step-nav">
-                <button class="btn-back" onclick="prevStep()">← กลับ</button>
-                <button class="btn-next gold" id="step4-calculate" onclick="calculateAndGoToResult()">
-                    <span>🧮 คำนวณ</span>
+                <button class="btn-back hvr-icon-grow" onclick="prevStep()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    กลับ
+                </button>
+                <button class="btn-calculate hvr-grow hvr-glow" onclick="calculate()">
+                    <!-- ★ FROM ANIMATE.CSS - pulse on calculate button -->
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
+                    คำนวณ
                 </button>
             </div>
         </section>
@@ -386,130 +470,130 @@
         <!-- Step 5: Results -->
         <section class="step-panel" id="step-5" data-step="5">
             <div class="step-header">
-                <div class="step-icon-large">📊</div>
+                <div class="step-icon-large animate__animated animate__bounce">
+                    <!-- ★ FROM TABLER ICONS - replaces 📊 -->
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18"/>
+                        <path d="M9 21V9"/>
+                    </svg>
+                </div>
                 <h2 class="step-title">ผลลัพธ์</h2>
-                <p class="step-desc" id="result-desc">ขนาดล็อตที่แนะนำสำหรับคุณ</p>
+                <p class="step-desc" id="result-pair-desc">XAUUSD Long @ 2025.50</p>
             </div>
 
-            <!-- Big Lot Number -->
-            <div class="result-hero-card" id="result-hero-card">
-                <div class="rhc-label">ขนาดล็อตที่แนะนำ</div>
-                <div class="rhc-value" id="rhc-lot">0.00</div>
-                <div class="rhc-unit">Lots</div>
-                <div class="rhc-pair-tag" id="rhc-pair">EUR/USD</div>
+            <!-- Lot Result Card ★ FROM ANIMATE.CSS - big entrance animation -->
+            <div class="result-main-card glass-card animate__animated animate__zoomIn">
+                <div class="result-label">ขนาดที่เข้า (Lot)</div>
+                <div class="result-lot" id="result-lot">0.00</div>
+                <div class="result-sub">Standard Lot</div>
+                <div class="result-micro" id="result-micro">0.00</div>
+                <div class="result-sub-micro">Micro Lot</div>
             </div>
 
-            <!-- Risk/Reward Summary -->
-            <div class="result-summary-row">
-                <div class="result-mini-card risk">
-                    <div class="rmc-label">ความเสี่ยง</div>
-                    <div class="rmc-value" id="rmc-risk">$0.00</div>
-                </div>
-                <div class="result-mini-card rr">
-                    <div class="rmc-label">Risk : Reward</div>
-                    <div class="rmc-value gold" id="rmc-rr">1 : 3.00</div>
-                </div>
-                <div class="result-mini-card profit">
-                    <div class="rmc-label">กำไรที่ TP</div>
-                    <div class="rmc-value bullish" id="rmc-profit">$0.00</div>
-                </div>
-            </div>
-
-            <!-- Detailed Cards Grid -->
-            <div class="result-details-grid">
-                <div class="result-detail-card" id="rdc-risk-amount">
-                    <div class="rdc-icon">💵</div>
-                    <div class="rdc-content">
-                        <div class="rdc-label">ยอดเสีย (Risk)</div>
-                        <div class="rdc-value" id="rd-risk-amount">$0.00</div>
+            <!-- Stats Grid ★ FROM HOVER.CSS - hvr-shadow on each stat card -->
+            <div class="result-stats-grid">
+                <div class="stat-card hvr-shadow">
+                    <div class="stat-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     </div>
+                    <div class="stat-label">Risk Amount</div>
+                    <div class="stat-value" id="result-risk">$0.00</div>
+                    <div class="stat-detail" id="result-risk-pct">0.00%</div>
                 </div>
-                <div class="result-detail-card" id="rdc-position">
-                    <div class="rdc-icon">📈</div>
-                    <div class="rdc-content">
-                        <div class="rdc-label">ขนาดสถานะ</div>
-                        <div class="rdc-value" id="rd-position">0 Units</div>
+                <div class="stat-card hvr-shadow">
+                    <div class="stat-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                     </div>
+                    <div class="stat-label">SL Distance</div>
+                    <div class="stat-value" id="result-sl-dist">0 pips</div>
+                    <div class="stat-detail" id="result-sl-pct">0%</div>
                 </div>
-                <div class="result-detail-card" id="rdc-pip-value">
-                    <div class="rdc-icon">🎯</div>
-                    <div class="rdc-content">
-                        <div class="rdc-label">Pip Value / Lot</div>
-                        <div class="rdc-value" id="rd-pip-value">$0.00</div>
+                <div class="stat-card hvr-shadow">
+                    <div class="stat-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
                     </div>
+                    <div class="stat-label">Potential Reward</div>
+                    <div class="stat-value" id="result-reward">$0.00</div>
+                    <div class="stat-detail" id="result-rr-actual">R:R 1:0</div>
                 </div>
-                <div class="result-detail-card" id="rdc-sl-pips">
-                    <div class="rdc-icon">📏</div>
-                    <div class="rdc-content">
-                        <div class="rdc-label">SL (Pips)</div>
-                        <div class="rdc-value" id="rd-sl-pips">0</div>
+                <div class="stat-card hvr-shadow">
+                    <div class="stat-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
                     </div>
+                    <div class="stat-label">Margin Required</div>
+                    <div class="stat-value" id="result-margin">$0.00</div>
+                    <div class="stat-detail" id="result-leverage-used">1:1</div>
                 </div>
-                <div class="result-detail-card" id="rdc-tp-pips">
-                    <div class="rdc-icon">🎯</div>
-                    <div class="rdc-content">
-                        <div class="rdc-label">TP (Pips)</div>
-                        <div class="rdc-value" id="rd-tp-pips">0</div>
+                <div class="stat-card hvr-shadow">
+                    <div class="stat-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     </div>
+                    <div class="stat-label">Risk / Reward</div>
+                    <div class="stat-value" id="result-rr">1:0</div>
+                    <div class="stat-detail" id="result-quality">--</div>
                 </div>
-                <div class="result-detail-card" id="rdc-margin">
-                    <div class="rdc-icon">🏦</div>
-                    <div class="rdc-content">
-                        <div class="rdc-label">Margin ที่ต้องใช้</div>
-                        <div class="rdc-value" id="rd-margin">$0.00</div>
+                <div class="stat-card hvr-shadow">
+                    <div class="stat-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     </div>
-                </div>
-                <div class="result-detail-card" id="rdc-risk-pct">
-                    <div class="rdc-icon">💹</div>
-                    <div class="rdc-content">
-                        <div class="rdc-label">% ความเสี่ยง</div>
-                        <div class="rdc-value" id="rd-risk-pct">0%</div>
-                    </div>
-                </div>
-                <div class="result-detail-card" id="rdc-loss">
-                    <div class="rdc-icon">📉</div>
-                    <div class="rdc-content">
-                        <div class="rdc-label">ขาดทุนที่ SL</div>
-                        <div class="rdc-value bearish" id="rd-loss">-$0.00</div>
-                    </div>
+                    <div class="stat-label">Break Even</div>
+                    <div class="stat-value" id="result-breakeven">--</div>
+                    <div class="stat-detail">pip(s) to cover fee</div>
                 </div>
             </div>
 
-            <!-- Risk Visual Bar -->
-            <div class="risk-visual-bar" id="risk-visual-bar">
-                <div class="rvb-header">
-                    <span class="rvb-label">ความเสี่ยงต่อบัญชี</span>
-                    <span class="rvb-badge" id="rvb-badge">ปลอดภัย</span>
-                </div>
-                <div class="rvb-bar">
-                    <div class="rvb-fill" id="rvb-fill"></div>
-                </div>
-                <div class="rvb-labels">
-                    <span>0%</span>
-                    <span id="rvb-max-label">5% ($500)</span>
-                </div>
+            <!-- Recommendation Box ★ FROM HOVER.CSS - hvr-grow on hover -->
+            <div class="recommendation-box hvr-grow" id="recommendation-box">
+                <!-- ★ FROM TABLER ICONS -->
+                <svg class="rec-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <div class="rec-text" id="rec-text">ผลลัพธ์พร้อมแล้ว</div>
             </div>
 
             <!-- Action Buttons -->
             <div class="result-actions">
-                <button class="btn-restart" onclick="restartCalculator()">
-                    <span>🔄 เริ่มใหม่</span>
+                <button class="btn-reset hvr-grow" onclick="resetAll()">
+                    <!-- ★ FROM TABLER ICONS -->
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    เริ่มใหม่
                 </button>
-                <button class="btn-edit" onclick="goToStep(4)">
-                    <span>✏️ แก้ไขราคา</span>
+                <button class="btn-copy hvr-grow" onclick="copyResults()">
+                    <!-- ★ FROM TABLER ICONS -->
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    คัดลอก
+                </button>
+            </div>
+
+            <div class="step-nav">
+                <button class="btn-back hvr-icon-grow" onclick="prevStep()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    กลับไปแก้
+                </button>
+                <button class="btn-next hvr-grow hvr-glow animate__animated animate__pulse" onclick="nextStep()">
+                    คำนวณใหม่
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                 </button>
             </div>
         </section>
+
     </main>
 
-    <!-- Footer -->
-    <footer class="app-footer">
-        <span>📐 Trading Calculator Pro | Nong Her | Ocean Ten HQ</span>
-        <span class="footer-sep">•</span>
-        <span>Data: Financial Modeling Prep</span>
-    </footer>
+    <!-- Toast Container ★ FROM TOASTIFY.JS -->
+    <div id="toast-container"></div>
+
 </div>
 
+<!-- External Libraries ★ FROM RESEARCH -->
+<!-- animate.css: CSS @keyframes animations (82K ⭐) -->
+<!-- Hover.css: 40+ hover effects (29K ⭐) -->
+<!-- SpinKit: Loading spinners (19K ⭐) -->
+<!-- Tabler Icons: 6000+ SVG icons (20K ⭐) -->
+<!-- Toastify.js: Toast notifications (2.5K ⭐) -->
+
 <script src="assets/js/calculator.js"></script>
+<!-- ★ FROM TOASTIFY.JS - Toast notification library -->
+<script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js"></script>
 </body>
 </html>
