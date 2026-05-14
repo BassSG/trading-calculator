@@ -2,8 +2,8 @@
   "name": "Trading Calculator Pro",
   "short_name": "TradingCalc",
   "description": "Position Size Calculator with ATR Risk Management",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "https://basssg.github.io/trading-calculator/",
+  "scope": "https://basssg.github.io/trading-calculator/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0a0e17",
@@ -12,13 +12,13 @@
   "categories": ["finance", "utilities"],
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "https://basssg.github.io/trading-calculator/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "https://basssg.github.io/trading-calculator/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
