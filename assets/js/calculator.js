@@ -92,9 +92,10 @@ function calculate() {
 
 function calculatePipValue(pair, unit) {
     // Pip value per standard lot in quote currency
-    // For JPY pairs, pip = 0.01, for others pip = 0.0001
-    const isJPY = pair.includes('JPY');
+    // For JPY pairs & metals (XAUUSD), pip = 0.01; for forex majors, pip = 0.0001
+    const isJPY = pair.includes('JPY') || pair === 'XAUUSD';
     const pipSize = isJPY ? 0.01 : 0.0001;
+    // For XAUUSD: 1 pip = $0.01 per oz. Standard lot = 100 oz → $1/pip
     return unit * pipSize;
 }
 
