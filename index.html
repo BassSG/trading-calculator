@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Trading Calculator - Position Size & Lot Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-top">
+                <div class="logo">
+                    <div class="logo-icon">📐</div>
+                    <div class="logo-text">
+                        <h1>Trading Calculator</h1>
+                        <p>คำนวณ Position Size, Lot และ Risk/Reward อย่างแม่นยำ</p>
+                    </div>
+                </div>
+                <div class="header-badge">
+                    <span class="badge badge-gold">
+                        <span class="status-dot gold"></span>
+                        Trading Tools
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="calc-layout">
+
+            <!-- LEFT COLUMN: Inputs -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-icon">⚙️</span>
+                    <h2>ตั้งค่าการคำนวณ</h2>
+                </div>
+
+                <!-- Account Section -->
+                <div class="input-section">
+                    <h3 class="section-title">💰 บัญชี (Account)</h3>
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label>ยอดเงินต้น (Balance)</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="balance" value="10000" min="0" step="100">
+                                <select id="account-currency">
+                                    <option value="USD">USD</option>
+                                    <option value="THB">THB</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="GBP">GBP</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>เลเวอเรจ (Leverage)</label>
+                            <select id="leverage">
+                                <option value="1">1:1</option>
+                                <option value="10">1:10</option>
+                                <option value="20">1:20</option>
+                                <option value="50" selected>1:50</option>
+                                <option value="100">1:100</option>
+                                <option value="200">1:200</option>
+                                <option value="500">1:500</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Section -->
+                <div class="input-section">
+                    <h3 class="section-title">🎯 ความเสี่ยง (Risk Management)</h3>
+                    <div class="risk-toggle">
+                        <button class="toggle-btn active" data-mode="percent" onclick="setRiskMode('percent')">
+                            <span>%</span> เปอร์เซ็นต์
+                        </button>
+                        <button class="toggle-btn" data-mode="amount" onclick="setRiskMode('amount')">
+                            <span>💵</span> จำนวนเงิน
+                        </button>
+                    </div>
+                    <div class="input-grid">
+                        <div class="input-group" id="risk-percent-group">
+                            <label>ยอมรับความเสี่ยง (Risk %)</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="risk-percent" value="2" min="0.1" max="100" step="0.1">
+                                <span class="unit">%</span>
+                            </div>
+                        </div>
+                        <div class="input-group hidden" id="risk-amount-group">
+                            <label>ยอมรับความเสี่ยง (Risk Amount)</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="risk-amount" value="200" min="0" step="1">
+                                <span class="unit" id="risk-currency-label">USD</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>ผลตอบแทนต่อความเสี่ยง (Risk : Reward)</label>
+                            <div class="rr-selector">
+                                <button class="rr-btn" onclick="setRR(1)">1:1</button>
+                                <button class="rr-btn" onclick="setRR(2)">1:2</button>
+                                <button class="rr-btn active" onclick="setRR(3)">1:3</button>
+                                <button class="rr-btn" onclick="setRR(4)">1:4</button>
+                                <input type="number" id="rr-custom" value="3" min="0.1" step="0.1" placeholder="Custom">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pair & Price Section -->
+                <div class="input-section">
+                    <h3 class="section-title">📈 คู่เงิน & ราคา (Pair & Prices)</h3>
+                    <div class="input-group full-width">
+                        <label>คู่เงิน (Currency Pair)</label>
+                        <div class="pair-selector">
+                            <div class="pair-category">
+                                <span class="pair-cat-label">🏠 Majors</span>
+                                <div class="pair-buttons">
+                                    <button class="pair-btn active" data-pair="EURUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">EUR/USD</button>
+                                    <button class="pair-btn" data-pair="GBPUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">GBP/USD</button>
+                                    <button class="pair-btn" data-pair="USDJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">USD/JPY</button>
+                                    <button class="pair-btn" data-pair="USDCHF" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">USD/CHF</button>
+                                    <button class="pair-btn" data-pair="AUDUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">AUD/USD</button>
+                                    <button class="pair-btn" data-pair="USDCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">USD/CAD</button>
+                                    <button class="pair-btn" data-pair="NZDUSD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">NZD/USD</button>
+                                </div>
+                            </div>
+                            <div class="pair-category">
+                                <span class="pair-cat-label">💠 Minors / Crosses</span>
+                                <div class="pair-buttons">
+                                    <button class="pair-btn" data-pair="XAUUSD" data-pip="0.01" data-unit="100" onclick="selectPair(this)">XAU/USD 🟡</button>
+                                    <button class="pair-btn" data-pair="EURGBP" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">EUR/GBP</button>
+                                    <button class="pair-btn" data-pair="EURJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">EUR/JPY</button>
+                                    <button class="pair-btn" data-pair="GBPJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">GBP/JPY</button>
+                                    <button class="pair-btn" data-pair="AUDJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">AUD/JPY</button>
+                                    <button class="pair-btn" data-pair="EURAUD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">EUR/AUD</button>
+                                    <button class="pair-btn" data-pair="GBPAUD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">GBP/AUD</button>
+                                    <button class="pair-btn" data-pair="GBPCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">GBP/CAD</button>
+                                    <button class="pair-btn" data-pair="GBPNZD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">GBP/NZD</button>
+                                    <button class="pair-btn" data-pair="NZDJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">NZD/JPY</button>
+                                    <button class="pair-btn" data-pair="AUDCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">AUD/CAD</button>
+                                    <button class="pair-btn" data-pair="AUDCHF" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">AUD/CHF</button>
+                                    <button class="pair-btn" data-pair="CADJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">CAD/JPY</button>
+                                    <button class="pair-btn" data-pair="CHFJPY" data-pip="0.01" data-unit="100000" onclick="selectPair(this)">CHF/JPY</button>
+                                    <button class="pair-btn" data-pair="EURCAD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">EUR/CAD</button>
+                                    <button class="pair-btn" data-pair="EURNZD" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">EUR/NZD</button>
+                                    <button class="pair-btn" data-pair="EURCHF" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">EUR/CHF</button>
+                                    <button class="pair-btn" data-pair="CADCHF" data-pip="0.0001" data-unit="100000" onclick="selectPair(this)">CAD/CHF</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label>ราคาปัจจุบัน / เข้า (Entry Price)</label>
+                            <input type="number" id="entry-price" value="1.0950" min="0" step="0.00001">
+                        </div>
+                        <div class="input-group">
+                            <label>จุดสต็อปลอส (Stop Loss)</label>
+                            <input type="number" id="sl-price" value="1.0900" min="0" step="0.00001">
+                        </div>
+                        <div class="input-group">
+                            <label>จุดเทคโพรฟิต (Take Profit)</label>
+                            <input type="number" id="tp-price" value="1.1050" min="0" step="0.00001">
+                        </div>
+                        <div class="input-group">
+                            <label>ทิศทาง (Direction)</label>
+                            <div class="direction-toggle">
+                                <button class="dir-btn long active" onclick="setDirection('long')">📈 LONG</button>
+                                <button class="dir-btn short" onclick="setDirection('short')">📉 SHORT</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="calc-btn" onclick="calculate()">
+                    <span class="btn-icon">🧮</span> คำนวณ Position Size
+                </button>
+            </div>
+
+            <!-- RIGHT COLUMN: Results -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-icon">📊</span>
+                    <h2>ผลลัพธ์การคำนวณ</h2>
+                </div>
+
+                <!-- Main Result Cards -->
+                <div class="result-hero">
+                    <div class="result-main-card">
+                        <div class="result-label">ขนาดล็อตที่แนะนำ</div>
+                        <div class="result-value" id="lot-size">0.00</div>
+                        <div class="result-unit">Lots</div>
+                    </div>
+                    <div class="result-side-cards">
+                        <div class="mini-card">
+                            <div class="mini-label">ความเสี่ยงต่อครั้ง</div>
+                            <div class="mini-value" id="risk-value">$0.00</div>
+                        </div>
+                        <div class="mini-card">
+                            <div class="mini-label">Risk : Reward</div>
+                            <div class="mini-value" id="rr-ratio">1 : 3.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Results Grid -->
+                <div class="results-grid" id="results-grid">
+                    <div class="result-card">
+                        <div class="result-card-icon">💵</div>
+                        <div class="result-card-content">
+                            <div class="result-card-label">Risk Amount (จำนวนเงินที่เสี่ยง)</div>
+                            <div class="result-card-value" id="risk-amount-result">$0.00</div>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-card-icon">📈</div>
+                        <div class="result-card-content">
+                            <div class="result-card-label">Position Size (ขนาดสถานะ)</div>
+                            <div class="result-card-value" id="position-size-result">0 Units</div>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-card-icon">🎯</div>
+                        <div class="result-card-content">
+                            <div class="result-card-label">Pip Value per Lot</div>
+                            <div class="result-card-value" id="pip-value-result">$0.00/lot</div>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-card-icon">📏</div>
+                        <div class="result-card-content">
+                            <div class="result-card-label">Stop Loss (Pips)</div>
+                            <div class="result-card-value" id="sl-pips-result">0 pips</div>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-card-icon">🎯</div>
+                        <div class="result-card-content">
+                            <div class="result-card-label">Take Profit (Pips)</div>
+                            <div class="result-card-value" id="tp-pips-result">0 pips</div>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-card-icon">💰</div>
+                        <div class="result-card-content">
+                            <div class="result-card-label">Estimated Profit at TP</div>
+                            <div class="result-card-value" id="profit-result">$0.00</div>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-card-icon">📉</div>
+                        <div class="result-card-content">
+                            <div class="result-card-label">Estimated Loss at SL</div>
+                            <div class="result-card-value" id="loss-result">$0.00</div>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-card-icon">🏦</div>
+                        <div class="result-card-content">
+                            <div class="result-card-label">Margin Required</div>
+                            <div class="result-card-value" id="margin-result">$0.00</div>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-card-icon">⚖️</div>
+                        <div class="result-card-content">
+                            <div class="result-card-label">Risk : Reward Ratio</div>
+                            <div class="result-card-value" id="rr-detail-result">1 : 3.00</div>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-card-icon">💹</div>
+                        <div class="result-card-content">
+                            <div class="result-card-label">% of Account at Risk</div>
+                            <div class="result-card-value" id="risk-pct-result">0.00%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Risk Bar -->
+                <div class="risk-visual">
+                    <div class="risk-bar-container">
+                        <div class="risk-bar-labels">
+                            <span>$0</span>
+                            <span id="risk-bar-max">$500</span>
+                        </div>
+                        <div class="risk-bar">
+                            <div class="risk-bar-fill" id="risk-bar-fill" style="width: 0%"></div>
+                            <div class="risk-bar-marker" id="risk-bar-marker"></div>
+                        </div>
+                        <div class="risk-bar-labels">
+                            <span>0%</span>
+                            <span id="risk-pct-bar-max">5%</span>
+                        </div>
+                    </div>
+                    <div class="risk-info">
+                        <span class="risk-badge" id="risk-level-badge">ปลอดภัย</span>
+                        <span id="account-balance-display">Balance: $10,000</span>
+                    </div>
+                </div>
+
+                <!-- Quick Reference Table -->
+                <div class="quick-ref">
+                    <h3 class="section-title">📋 Lot Size Reference Table</h3>
+                    <table class="ref-table">
+                        <thead>
+                            <tr>
+                                <th>Lot Size</th>
+                                <th>Units</th>
+                                <th>Pip Value (std)</th>
+                                <th>$ Risk at 100 pip</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lot-ref-body">
+                            <!-- populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>📐 Trading Calculator | Developed by Nong Her | Ocean Ten HQ</p>
+            <p>⚠️ ข้อมูลนี้เพื่อการศึกษาเท่านั้น ไม่ใช่คำแนะนำทางการเงิน</p>
+        </footer>
+    </div>
+
+    <script src="assets/js/calculator.js"></script>
+</body>
+</html>
