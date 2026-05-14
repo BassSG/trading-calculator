@@ -1,39 +1,32 @@
 // ================================================
-// Trading Calculator Pro - Position Size Engine
-// FMP Live Data + ATR Risk Management
+// Trading Calculator Pro - Step-by-Step App
 // ================================================
 
-const FMP_API_KEY = 'WhZvG1WwRoLOE0vJQGsiS9b5XqTft5rK';
-const FMP_BASE_URL = 'https://financialmodelingprep.com/api/v3';
+const FMP_KEY = 'WhZvG1WwRoLOE0vJQGsiS9b5XqTft5rK';
+const FMP_URL = 'https://financialmodelingprep.com/api/v3';
 
 // State
 let state = {
     balance: 10000,
-    accountCurrency: 'USD',
+    currency: 'USD',
     leverage: 50,
     riskMode: 'percent',
     riskPercent: 2,
     riskAmount: 200,
-    riskReward: 3,
-    pair: 'EURUSD',
+    rr: 3,
+    pair: null,
     pip: 0.0001,
     unit: 100000,
-    entryPrice: 1.0950,
-    slPrice: 1.0900,
-    tpPrice: 1.1050,
+    entryPrice: 0,
+    slPrice: 0,
+    tpPrice: 0,
     direction: 'long'
 };
 
-// Live market data
 let marketData = {};
-let atrData = {
-    atr14: null,
-    atrPct: null,
-    atrDaily: null,
-    percentile: null,
-    slRecommendation: null,
-    timeframe: '15min'
-};
+let atrData = { atr14: null, atrPct: null, slPips: null, timeframe: '15min' };
+let currentStep = 1;
+const TOTAL_STEPS = 5;
 
 // ================================================
 // FMP Data Fetching
@@ -41,475 +34,517 @@ let atrData = {
 
 async function fetchQuote(symbol) {
     try {
-        const res = await fetch(`${FMP_BASE_URL}/quote/${symbol}?apikey=${FMP_API_KEY}`);
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data[0] || null;
-    } catch (e) {
-        console.warn(`FMP fetch error for ${symbol}:`, e);
-        return null;
-    }
+        const r = await fetch(`${FMP_URL}/quote/${symbol}?apikey=${FMP_KEY}`);
+        if (!r.ok) return null;
+        const d = await r.json();
+        return d[0] || null;
+    } catch (e) { return null; }
 }
 
-async function fetchHistoricalChart(symbol, interval = '15min') {
+async function fetchHistory(symbol, interval = '15min') {
     try {
-        const res = await fetch(`${FMP_BASE_URL}/historical-chart/${interval}/${symbol}?apikey=${FMP_API_KEY}`);
-        if (!res.ok) return null;
-        return await res.json();
-    } catch (e) {
-        console.warn(`FMP historical fetch error for ${symbol}:`, e);
-        return null;
-    }
+        const r = await fetch(`${FMP_URL}/historical-chart/${interval}/${symbol}?apikey=${FMP_KEY}`);
+        if (!r.ok) return null;
+        return await r.json();
+    } catch (e) { return null; }
 }
 
-async function loadAllMarketData() {
-    showLoading('กำลังดึงข้อมูลราคาตลาด...');
+async function loadAllData() {
+    showLoading('กำลังดึงข้อมูลตลาด...');
     try {
-        const symbols = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'XAUUSD', 'BTCUSD', 'ETHUSD', 'EURGBP', 'EURJPY', 'GBPJPY'];
-        const promises = symbols.map(s => fetchQuote(s));
+        const syms = ['EURUSD','GBPUSD','USDJPY','USDCHF','AUDUSD','USDCAD','NZDUSD','XAUUSD','BTCUSD','ETHUSD','EURGBP','EURJPY','GBPJPY','EURAUD','GBPAUD'];
+        const promises = syms.map(s => fetchQuote(s));
         const results = await Promise.allSettled(promises);
-        results.forEach((result, i) => {
-            if (result.status === 'fulfilled' && result.value) {
-                marketData[symbols[i]] = result.value;
-            }
+        results.forEach((r, i) => {
+            if (r.status === 'fulfilled' && r.value) marketData[syms[i]] = r.value;
         });
-
-        // Load ATR for active pair
-        await loadATRData(state.pair);
-
-        renderPriceTicker();
-        updatePairInfoBar();
+        renderTicker();
+        updateAllPairPrices();
+        if (state.pair) await loadATR(state.pair);
         hideLoading();
     } catch (e) {
-        console.warn('loadAllMarketData error:', e);
         hideLoading();
     }
 }
 
-async function loadATRData(symbol) {
-    // For metals/crypto use 15min; for forex use daily
+async function loadATR(symbol) {
     const interval = (symbol === 'XAUUSD' || symbol === 'BTCUSD' || symbol === 'ETHUSD') ? '15min' : 'daily';
-    const history = await fetchHistoricalChart(symbol, interval);
+    const bars = await fetchHistory(symbol, interval);
+    if (!bars || bars.length < 20) return;
 
-    if (!history || history.length < 20) return;
-
-    // Keep full history in memory
-    atrData.history = history.slice(0, 200); // keep 200 bars
     atrData.timeframe = interval;
-
-    // Calculate ATR(14)
-    const bars = history;
     let trs = [];
     for (let i = 0; i < bars.length - 1; i++) {
-        const high = bars[i].high;
-        const low = bars[i].low;
-        const prevClose = bars[i + 1].close;
-        const tr = Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
+        const tr = Math.max(bars[i].high - bars[i].low, Math.abs(bars[i].high - bars[i+1].close), Math.abs(bars[i].low - bars[i+1].close));
         trs.push(tr);
     }
+    atrData.atr14 = trs.slice(0, 14).reduce((a, b) => a + b, 0) / 14;
+    const price = bars[0].close;
+    atrData.atrPct = (atrData.atr14 / price) * 100;
+    atrData.slPips = atrData.atr14 / state.pip;
+    atrData.daily = interval === '15min' ? atrData.atr14 * 8 : atrData.atr14;
 
-    // ATR(14) = Wilder's smoothing
-    const atr14 = trs.slice(0, 14).reduce((a, b) => a + b, 0) / 14;
-    atrData.atr14 = atr14;
-
-    // ATR as % of price
-    const currentPrice = bars[0].close;
-    atrData.atrPct = (atr14 / currentPrice) * 100;
-
-    // Daily ATR estimate (for 15min, extrapolate)
-    if (interval === '15min') {
-        atrData.atrDaily = atr14 * 8; // ~8 x 15min = 24h
-    } else {
-        atrData.atrDaily = atr14;
-    }
-
-    // Percentile rank (last 50 bars vs 200-bar history)
-    if (atrData.history && atrData.history.length >= 50) {
-        const recent50 = trs.slice(0, 50);
-        const allBars = atrData.history;
-        const allTrs = [];
-        for (let i = 0; i < allBars.length - 1; i++) {
-            const tr = Math.max(
-                allBars[i].high - allBars[i].low,
-                Math.abs(allBars[i].high - allBars[i + 1].close),
-                Math.abs(allBars[i].low - allBars[i + 1].close)
-            );
-            allTrs.push(tr);
+    // Percentile
+    if (bars.length >= 50) {
+        let allTrs = [];
+        for (let i = 0; i < bars.length - 1; i++) {
+            allTrs.push(Math.max(bars[i].high - bars[i].low, Math.abs(bars[i].high - bars[i+1].close), Math.abs(bars[i].low - bars[i+1].close)));
         }
         const sorted = [...allTrs].sort((a, b) => a - b);
-        const rank = recent50[0]; // current ATR
-        const below = sorted.filter(v => v <= rank).length;
-        atrData.percentile = Math.round((below / sorted.length) * 100);
+        const rank = sorted.filter(v => v <= trs[0]).length;
+        atrData.percentile = Math.round((rank / sorted.length) * 100);
     }
 
-    // SL Recommendation: 1x ATR
-    const pipSize = symbol === 'XAUUSD' || symbol === 'BTCUSD' ? 0.01 : (symbol.includes('JPY') ? 0.01 : 0.0001);
-    atrData.slRecommendation = atr14 / pipSize; // in pips
-
-    renderATRPanel();
+    renderATR();
 }
 
-function renderPriceTicker() {
-    const ticker = document.getElementById('price-ticker');
-    const watchList = ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD', 'BTCUSD', 'ETHUSD', 'AUDUSD', 'USDCAD', 'NZDUSD'];
-
+function renderTicker() {
+    const scroll = document.getElementById('ticker-scroll');
+    if (!scroll) return;
+    const watch = ['EURUSD','GBPUSD','USDJPY','XAUUSD','BTCUSD','ETHUSD','AUDUSD','USDCAD'];
     let html = '';
-    watchList.forEach(sym => {
-        const data = marketData[sym];
-        if (!data) return;
-        const change = data.changesPercentage;
-        const sign = change >= 0 ? '+' : '';
-        const cls = change >= 0 ? 'up' : 'down';
-        const isActive = sym === state.pair;
-        html += `<div class="ticker-item ${isActive ? 'active' : ''}" onclick="tickerSelectPair('${sym}')">
-            <span class="ticker-symbol">${sym.replace('USD', '/USD')}</span>
-            <span class="ticker-price">${data.price.toFixed(sym === 'XAUUSD' || sym === 'BTCUSD' ? 2 : 5)}</span>
-            <span class="ticker-change ${cls}">${sign}${change.toFixed(2)}%</span>
+    watch.forEach(s => {
+        const d = marketData[s];
+        if (!d) return;
+        const chg = d.changesPercentage;
+        const cls = chg >= 0 ? 'up' : 'down';
+        const sign = chg >= 0 ? '+' : '';
+        const isAct = s === state.pair;
+        const dec = (s.includes('JPY') || s === 'XAUUSD' || s === 'BTCUSD' || s === 'ETHUSD') ? 2 : 5;
+        html += `<div class="ticker-item ${isAct ? 'active' : ''}" onclick="tickerSelect('${s}')">
+            <span class="ticker-sym">${s.replace('USD','/USD')}</span>
+            <span class="ticker-price">${d.price.toFixed(dec)}</span>
+            <span class="ticker-chg ${cls}">${sign}${chg.toFixed(2)}%</span>
         </div>`;
     });
-
-    html += `<button class="ticker-refresh" id="refresh-btn" onclick="refreshData()" title="รีเฟรชข้อมูล">🔄 Refresh</button>`;
-    ticker.innerHTML = html;
+    scroll.innerHTML = html;
 }
 
-function updatePairInfoBar() {
-    const data = marketData[state.pair];
-    if (!data) return;
-
-    const isJPY = state.pair.includes('JPY');
-    const isMetal = state.pair === 'XAUUSD' || state.pair === 'BTCUSD';
-    const decimals = isJPY || isMetal ? 2 : 5;
-
-    document.getElementById('live-price').textContent = data.price.toFixed(decimals);
-    const spread = data.dayHigh - data.dayLow;
-    document.getElementById('spread-value').textContent = spread.toFixed(decimals);
-    document.getElementById('pip-size-display').textContent = state.pip;
-    document.getElementById('unit-display').textContent = state.unit.toLocaleString();
-
-    // Auto-fill entry price if empty
-    const entryInput = document.getElementById('entry-price');
-    if (!entryInput.value || parseFloat(entryInput.value) === 0) {
-        entryInput.value = data.price.toFixed(decimals);
-    }
-}
-
-function renderATRPanel() {
-    // Update ATR stats
-    document.getElementById('atr-value').textContent = atrData.atr14 ? atrData.atr14.toFixed(2) : '--';
-    document.getElementById('atr-timeframe').textContent = atrData.timeframe;
-    document.getElementById('atr-pct').textContent = atrData.atrPct ? atrData.atrPct.toFixed(3) + '%' : '--';
-    document.getElementById('atr-daily').textContent = atrData.atrDaily ? atrData.atrDaily.toFixed(2) : '--';
-    document.getElementById('atr-percentile').textContent = atrData.percentile ? atrData.percentile + '%' : '--';
-
-    // Volatility badge
-    const badge = document.getElementById('atr-vol-badge');
-    if (atrData.atrPct !== null) {
-        if (atrData.atrPct < 0.1) {
-            badge.className = 'atr-badge low';
-            badge.textContent = '🟢 Low Vol';
-        } else if (atrData.atrPct < 0.5) {
-            badge.className = 'atr-badge medium';
-            badge.textContent = '🟡 Medium Vol';
-        } else {
-            badge.className = 'atr-badge high';
-            badge.textContent = '🔴 High Vol';
-        }
-    }
-
-    // SL Recommendation
-    const slPips = atrData.slRecommendation;
-    document.getElementById('atr-sl-value').textContent = slPips ? slPips.toFixed(0) + ' pips' : '--';
-    document.getElementById('atr-sl-pips-val').textContent = slPips ? `≈ ${(slPips * state.pip).toFixed(state.pip === 0.01 ? 2 : 4)} price units` : '--';
-
-    const entryInput = document.getElementById('entry-price');
-    if (entryInput.value && parseFloat(entryInput.value) > 0) {
-        document.getElementById('atr-sl-pips-text').textContent =
-            `${slPips ? slPips.toFixed(0) + ' pips' : '--'} จากราคา ${parseFloat(entryInput.value).toFixed(2)}`;
-    }
-}
-
-// ================================================
-// Core Calculation Logic
-// ================================================
-
-function calculate() {
-    readInputs();
-
-    // 1. Risk amount
-    let riskAmountCalc;
-    if (state.riskMode === 'percent') {
-        riskAmountCalc = (state.riskPercent / 100) * state.balance;
-    } else {
-        riskAmountCalc = state.riskAmount;
-    }
-
-    // 2. SL/TP distances in pips
-    const slPips = Math.abs(state.entryPrice - state.slPrice) / state.pip;
-    const tpPips = Math.abs(state.tpPrice - state.entryPrice) / state.pip;
-
-    // 3. Pip value per lot
-    const pipValuePerLot = calculatePipValue(state.pair, state.unit);
-
-    // 4. Lot size
-    const lotSize = slPips > 0 ? riskAmountCalc / (slPips * pipValuePerLot) : 0;
-
-    // 5. Position details
-    const positionUnits = lotSize * state.unit;
-    const positionPipValue = slPips > 0 ? riskAmountCalc / slPips : 0;
-    const estimatedProfit = tpPips * positionPipValue;
-    const estimatedLoss = slPips * positionPipValue;
-    const actualRR = slPips > 0 ? tpPips / slPips : 0;
-    const marginRequired = positionUnits / state.leverage;
-    const riskPct = state.balance > 0 ? (riskAmountCalc / state.balance) * 100 : 0;
-
-    renderResults({
-        lotSize,
-        riskAmountCalc,
-        positionUnits,
-        slPips,
-        tpPips,
-        estimatedProfit,
-        estimatedLoss,
-        actualRR,
-        marginRequired,
-        riskPct,
-        positionPipValue,
-        pipValuePerLot
+function updateAllPairPrices() {
+    const pairs = ['EURUSD','GBPUSD','USDJPY','USDCHF','AUDUSD','USDCAD','NZDUSD','XAUUSD','BTCUSD','ETHUSD','EURGBP','EURJPY','GBPJPY','EURAUD','GBPAUD','GBPCAD','EURNZD','EURCHF','GBPNZD','NZDJPY','AUDCAD'];
+    pairs.forEach(s => {
+        const el = document.getElementById('price-' + s);
+        if (!el) return;
+        const d = marketData[s];
+        if (!d) { el.textContent = '--'; return; }
+        const dec = (s.includes('JPY') || s === 'XAUUSD' || s === 'BTCUSD' || s === 'ETHUSD') ? 2 : 5;
+        el.textContent = d.price.toFixed(dec);
+    });
+    // Also update metals section prices (separate IDs)
+    ['price-XAUUSD2','price-BTCUSD','price-ETHUSD'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const sym = id.replace('price-','').replace('2','');
+        const d = marketData[sym];
+        if (!d) { el.textContent = '--'; return; }
+        el.textContent = d.price.toFixed(sym.includes('JPY') || sym === 'XAUUSD' || sym === 'BTCUSD' || sym === 'ETHUSD' ? 2 : 5);
     });
 }
 
-function calculatePipValue(pair, unit) {
-    const isJPY = pair.includes('JPY');
-    const isMetal = (pair === 'XAUUSD');
-    const pipSize = isJPY || isMetal ? 0.01 : 0.0001;
-    // For XAUUSD: 1 lot = 100 oz, 1 pip = $1
-    return unit * pipSize;
-}
-
-function renderResults(r) {
-    const fmt = (n, decimals = 2) => {
-        if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(2) + 'M';
-        if (Math.abs(n) >= 1e3) return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-        return n.toFixed(decimals);
-    };
-
-    const fmtMoney = (n) => {
-        const sign = n < 0 ? '-' : '';
-        return sign + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    };
-
-    // Hero results
-    document.getElementById('lot-size').textContent = r.lotSize.toFixed(2);
-    document.getElementById('risk-value').textContent = fmtMoney(r.riskAmountCalc);
-    document.getElementById('rr-ratio').textContent = `1 : ${r.actualRR.toFixed(2)}`;
-    document.getElementById('profit-result').textContent = `+${fmtMoney(r.estimatedProfit)}`;
-    document.getElementById('loss-result').textContent = `-${fmtMoney(r.estimatedLoss)}`;
-
-    // Detailed cards
-    document.getElementById('risk-amount-result').textContent = fmtMoney(r.riskAmountCalc);
-    document.getElementById('position-size-result').textContent = `${r.positionUnits.toLocaleString('en-US', { maximumFractionDigits: 0 })} Units`;
-    document.getElementById('pip-value-result').textContent = `$${r.positionPipValue.toFixed(2)}/lot`;
-    document.getElementById('sl-pips-result').textContent = `${r.slPips.toFixed(1)} pips`;
-    document.getElementById('tp-pips-result').textContent = `${r.tpPips.toFixed(1)} pips`;
-    document.getElementById('margin-result').textContent = fmtMoney(r.marginRequired);
-    document.getElementById('rr-detail-result').textContent = `1 : ${r.actualRR.toFixed(2)}`;
-    document.getElementById('risk-pct-result').textContent = `${r.riskPct.toFixed(2)}%`;
-
-    // Risk bar
-    document.getElementById('account-balance-display').textContent = `Balance: $${state.balance.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
-    const maxRisk = state.balance * 0.05;
-    const riskBarWidth = Math.min((r.riskAmountCalc / maxRisk) * 100, 100);
-    document.getElementById('risk-bar-fill').style.width = riskBarWidth + '%';
-    document.getElementById('risk-bar-max').textContent = '$' + maxRisk.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('risk-pct-bar-max').textContent = '5%';
-
-    // Risk badge
-    const badge = document.getElementById('risk-level-badge');
-    badge.className = 'risk-badge';
-    if (r.riskPct <= 1) badge.textContent = '🟢 ปลอดภัยมาก';
-    else if (r.riskPct <= 2) badge.textContent = '🟢 ปลอดภัย';
-    else if (r.riskPct <= 5) { badge.textContent = '🟡 ระวัง'; badge.classList.add('warning'); }
-    else badge.textContent = '🔴 เสี่ยงสูง';
-
-    // Reference table
-    renderLotRefTable(r.positionPipValue);
-    animateResults();
+function renderATR() {
+    const badge = document.getElementById('atr-badge');
+    if (atrData.atrPct !== null) {
+        if (atrData.atrPct < 0.1) { badge.className = 'atr-badge low'; badge.textContent = '🟢 Low Vol'; }
+        else if (atrData.atrPct < 0.5) { badge.className = 'atr-badge medium'; badge.textContent = '🟡 Medium Vol'; }
+        else { badge.className = 'atr-badge high'; badge.textContent = '🔴 High Vol'; }
+    }
+    document.getElementById('asi-atr').textContent = atrData.atr14 ? atrData.atr14.toFixed(2) : '--';
+    document.getElementById('asi-pct').textContent = atrData.atrPct ? atrData.atrPct.toFixed(3) + '%' : '--';
+    document.getElementById('asi-sl').textContent = atrData.slPips ? atrData.slPips.toFixed(0) + ' pips' : '--';
 }
 
 // ================================================
-// Input Reading
+// Step Navigation
 // ================================================
 
-function readInputs() {
-    state.balance = parseFloat(document.getElementById('balance').value) || 0;
-    state.accountCurrency = document.getElementById('account-currency').value;
-    state.leverage = parseInt(document.getElementById('leverage').value);
-    state.riskPercent = parseFloat(document.getElementById('risk-percent').value) || 0;
-    state.riskAmount = parseFloat(document.getElementById('risk-amount').value) || 0;
-    state.riskReward = parseFloat(document.getElementById('rr-custom').value) || 3;
-    state.entryPrice = parseFloat(document.getElementById('entry-price').value) || 0;
-    state.slPrice = parseFloat(document.getElementById('sl-price').value) || 0;
-    state.tpPrice = parseFloat(document.getElementById('tp-price').value) || 0;
+function goToStep(n) {
+    if (n < 1 || n > TOTAL_STEPS) return;
+    currentStep = n;
+
+    // Update panels
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById('step-' + n);
+    if (target) {
+        target.classList.add('active');
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Update progress bar
+    const fill = document.getElementById('step-fill');
+    if (fill) fill.style.width = ((n / TOTAL_STEPS) * 100) + '%';
+
+    // Update dots
+    document.querySelectorAll('.step-dot').forEach(d => {
+        const s = parseInt(d.dataset.step);
+        d.classList.remove('active', 'completed');
+        if (s === n) d.classList.add('active');
+        else if (s < n) d.classList.add('completed');
+    });
+
+    // If going to step 3 (pair selection) and we have market data already
+    if (n === 3 && Object.keys(marketData).length > 0) {
+        updateAllPairPrices();
+    }
+
+    // If going to step 4 and pair selected, load ATR for that pair
+    if (n === 4 && state.pair) {
+        updatePairInfoStep4();
+        loadATR(state.pair);
+    }
+
+    // If going to step 5, run calculation
+    if (n === 5) {
+        runCalculation();
+    }
+}
+
+function nextStep() {
+    if (currentStep === 3 && !state.pair) {
+        shakeElement(document.getElementById('step3-next'));
+        return;
+    }
+    if (currentStep < TOTAL_STEPS) {
+        animateBtnClick(event.target);
+        setTimeout(() => goToStep(currentStep + 1), 150);
+    }
+}
+
+function prevStep() {
+    if (currentStep > 1) {
+        animateBtnClick(event.target);
+        setTimeout(() => goToStep(currentStep - 1), 150);
+    }
 }
 
 // ================================================
-// UI Interactions
+// Form Interactions
 // ================================================
+
+function onBalanceChange(el) {
+    state.balance = parseFloat(el.value) || 0;
+    updateRiskPreview();
+}
+
+function setCurrency(val) {
+    state.currency = val;
+    document.querySelectorAll('#currency-seg .seg-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.val === val);
+    });
+    pulseElement(b);
+}
+
+function setLeverage(val) {
+    state.leverage = parseInt(val);
+    document.querySelectorAll('.lev-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.val) === state.leverage);
+    });
+    pulseElement(b);
+}
 
 function setRiskMode(mode) {
     state.riskMode = mode;
-    document.querySelectorAll('.toggle-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.mode === mode);
+    document.querySelectorAll('.mode-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.mode === mode);
     });
     document.getElementById('risk-percent-group').classList.toggle('hidden', mode !== 'percent');
     document.getElementById('risk-amount-group').classList.toggle('hidden', mode !== 'amount');
+    pulseElement(event.target);
 }
 
-function setRR(ratio) {
-    state.riskReward = ratio;
-    document.getElementById('rr-custom').value = ratio;
-    document.querySelectorAll('.rr-btn').forEach(btn => {
-        btn.classList.toggle('active', parseInt(btn.textContent.replace('1:', '')) === ratio);
-    });
-    // Auto-calculate TP based on R:R
-    autoFillTP();
+function onRiskSliderChange(val) {
+    state.riskPercent = parseFloat(val);
+    document.getElementById('risk-pct-label').textContent = val + '%';
+    updateRiskPreview();
 }
+
+function updateRiskPreview() {
+    const amount = state.riskMode === 'percent'
+        ? (state.riskPercent / 100) * state.balance
+        : state.riskAmount;
+    document.getElementById('risk-preview-usd').textContent = '$' + amount.toFixed(2);
+    document.getElementById('risk-preview-pct-label').textContent = state.riskMode === 'percent'
+        ? `ของ $${state.balance.toLocaleString()}`
+        : '';
+}
+
+function setRR(val) {
+    state.rr = parseFloat(val);
+    document.getElementById('rr-custom').value = val;
+    document.querySelectorAll('.rr-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.textContent.replace('1:','')) === state.rr);
+    });
+    pulseElement(b);
+}
+
+// ================================================
+// Pair Selection
+// ================================================
 
 function selectPair(el) {
-    // Clear active from all pair buttons
-    document.querySelectorAll('.pair-btn-v2').forEach(btn => btn.classList.remove('active'));
-    el.classList.add('active');
+    // Clear previous selection
+    document.querySelectorAll('.pair-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    pulseElement(el);
 
     state.pair = el.dataset.pair;
     state.pip = parseFloat(el.dataset.pip);
     state.unit = parseInt(el.dataset.unit);
 
-    // Update placeholders and clear stale prices for new pair
-    const isJPY = state.pair.includes('JPY');
-    const isMetal = (state.pair === 'XAUUSD' || state.pair === 'BTCUSD' || state.pair === 'ETHUSD');
-    const decimals = (isJPY || isMetal) ? 2 : 5;
-    const step = isJPY || isMetal ? '0.01' : '0.00001';
+    // Update selected pair banner
+    const banner = document.getElementById('selected-pair-banner');
+    const nameEl = document.getElementById('spair-name');
+    const infoEl = document.getElementById('spair-info');
+    if (banner) {
+        banner.style.display = 'flex';
+        nameEl.textContent = state.pair.replace('USD', '/USD');
+        const dec = (state.pair.includes('JPY') || state.pair === 'XAUUSD' || state.pair === 'BTCUSD' || state.pair === 'ETHUSD') ? 2 : 5;
+        const priceEl = document.getElementById('price-' + state.pair);
+        const livePrice = marketData[state.pair]?.price;
+        infoEl.textContent = livePrice ? 'Live: ' + livePrice.toFixed(dec) : 'ราคาตลาด';
+    }
 
-    document.getElementById('entry-price').value = '';
-    document.getElementById('entry-price').step = step;
-    document.getElementById('entry-price').placeholder = '0'.repeat(decimals + 2);
+    // Enable next button
+    const nextBtn = document.getElementById('step3-next');
+    if (nextBtn) nextBtn.disabled = false;
 
-    document.getElementById('sl-price').value = '';
-    document.getElementById('sl-price').step = step;
-    document.getElementById('sl-price').placeholder = '0'.repeat(decimals + 2);
-
-    document.getElementById('tp-price').value = '';
-    document.getElementById('tp-price').step = step;
-    document.getElementById('tp-price').placeholder = '0'.repeat(decimals + 2);
-
-    // Update pair info bar
-    updatePairInfoBar();
-
-    // Reload ATR for new pair
-    loadATRData(state.pair);
-
-    // Auto-fill from live price
-    fillEntryFromLive();
+    // Update step 4 pair info
+    updatePairInfoStep4();
 }
 
-function showPairTab(tab) {
-    document.querySelectorAll('.pair-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
-    document.getElementById('pair-majors').style.display = tab === 'majors' ? '' : 'none';
-    document.getElementById('pair-minors').style.display = tab === 'minors' ? '' : 'none';
-    document.getElementById('pair-metals').style.display = tab === 'metals' ? '' : 'none';
+function tickerSelect(symbol) {
+    // Find pair button and select it
+    const card = document.querySelector(`.pair-card[data-pair="${symbol}"]`);
+    if (card) {
+        // Switch to step 3 first if not there
+        goToStep(3);
+        setTimeout(() => selectPair(card), 300);
+    }
+}
+
+function updatePairInfoStep4() {
+    // Update entry price placeholder
+    const entryInput = document.getElementById('entry-price');
+    const slInput = document.getElementById('sl-price');
+    const tpInput = document.getElementById('tp-price');
+    if (!state.pair) return;
+
+    const dec = (state.pair.includes('JPY') || state.pair === 'XAUUSD' || state.pair === 'BTCUSD' || state.pair === 'ETHUSD') ? 2 : 5;
+    const step = (state.pair.includes('JPY') || state.pair === 'XAUUSD' || state.pair === 'BTCUSD' || state.pair === 'ETHUSD') ? '0.01' : '0.00001';
+    [entryInput, slInput, tpInput].forEach(inp => {
+        if (inp) { inp.step = step; inp.placeholder = 'ราคา'; }
+    });
+
+    // Auto-fill entry with live price
+    fillEntry();
 }
 
 function setDirection(dir) {
     state.direction = dir;
-    document.querySelectorAll('.dir-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.classList.contains(dir));
+    document.querySelectorAll('.dir-btn-app').forEach(b => {
+        b.classList.toggle('active', b.classList.contains(dir));
     });
+    pulseElement(event.target);
 }
 
-function fillEntryFromLive() {
-    const data = marketData[state.pair];
-    if (!data) return;
-    const isJPY = state.pair.includes('JPY');
-    const isMetal = (state.pair === 'XAUUSD' || state.pair === 'BTCUSD');
-    const decimals = (isJPY || isMetal) ? 2 : 5;
-    document.getElementById('entry-price').value = data.price.toFixed(decimals);
-    calculate();
+// ================================================
+// Price Fill Buttons
+// ================================================
+
+function fillEntry() {
+    const d = marketData[state.pair];
+    if (!d) return;
+    const dec = (state.pair.includes('JPY') || state.pair === 'XAUUSD' || state.pair === 'BTCUSD' || state.pair === 'ETHUSD') ? 2 : 5;
+    document.getElementById('entry-price').value = d.price.toFixed(dec);
+    state.entryPrice = d.price;
+    updatePriceSummary();
 }
 
-function fillSLFromATR() {
-    if (!atrData.slRecommendation || !document.getElementById('entry-price').value) return;
-    const entry = parseFloat(document.getElementById('entry-price').value);
-    const slDistance = atrData.slRecommendation * state.pip;
-    const sl = state.direction === 'long' ? entry - slDistance : entry + slDistance;
-    document.getElementById('sl-price').value = sl.toFixed(state.pip === 0.01 ? 2 : 5);
-    calculate();
+function fillSL() {
+    if (!atrData.slPips || !state.entryPrice) return;
+    const slDist = atrData.slPips * state.pip;
+    const sl = state.direction === 'long' ? state.entryPrice - slDist : state.entryPrice + slDist;
+    const dec = (state.pair.includes('JPY') || state.pair === 'XAUUSD' || state.pair === 'BTCUSD' || state.pair === 'ETHUSD') ? 2 : 5;
+    document.getElementById('sl-price').value = sl.toFixed(dec);
+    state.slPrice = sl;
+    updatePriceSummary();
 }
 
-function autoFillTP() {
+function fillTP() {
+    if (!state.entryPrice || !state.slPrice) return;
+    const slDist = Math.abs(state.entryPrice - state.slPrice);
+    const tpDist = slDist * state.rr;
+    const tp = state.direction === 'long' ? state.entryPrice + tpDist : state.entryPrice - tpDist;
+    const dec = (state.pair.includes('JPY') || state.pair === 'XAUUSD' || state.pair === 'BTCUSD' || state.pair === 'ETHUSD') ? 2 : 5;
+    document.getElementById('tp-price').value = tp.toFixed(dec);
+    state.tpPrice = tp;
+    updatePriceSummary();
+}
+
+function updatePriceSummary() {
+    const entry = parseFloat(document.getElementById('entry-price').value) || 0;
+    const sl = parseFloat(document.getElementById('sl-price').value) || 0;
+    const tp = parseFloat(document.getElementById('tp-price').value) || 0;
+    state.entryPrice = entry;
+    state.slPrice = sl;
+    state.tpPrice = tp;
+
+    if (!entry || !sl) {
+        document.getElementById('price-summary').style.display = 'none';
+        return;
+    }
+
+    const slPips = Math.abs(entry - sl) / state.pip;
+    const tpPips = Math.abs(tp - entry) / state.pip;
+    const actualRR = slPips > 0 ? tpPips / slPips : 0;
+
+    const summary = document.getElementById('price-summary');
+    summary.style.display = 'flex';
+    document.getElementById('ps-sl').textContent = slPips.toFixed(1) + ' pips';
+    document.getElementById('ps-tp').textContent = tpPips.toFixed(1) + ' pips';
+    document.getElementById('ps-rr').textContent = '1 : ' + actualRR.toFixed(2);
+}
+
+// ================================================
+// Calculation
+// ================================================
+
+function calculateAndGoToResult() {
+    animateBtnClick(event.target);
+    setTimeout(() => {
+        readPricesFromInputs();
+        runCalculation();
+        goToStep(5);
+    }, 200);
+}
+
+function readPricesFromInputs() {
+    state.entryPrice = parseFloat(document.getElementById('entry-price').value) || 0;
+    state.slPrice = parseFloat(document.getElementById('sl-price').value) || 0;
+    state.tpPrice = parseFloat(document.getElementById('tp-price').value) || 0;
+}
+
+function runCalculation() {
+    // Read latest values
+    state.balance = parseFloat(document.getElementById('balance').value) || 0;
+    state.riskAmount = state.riskMode === 'amount'
+        ? (parseFloat(document.getElementById('risk-amount-input').value) || 0)
+        : (state.riskPercent / 100) * state.balance;
+    state.rr = parseFloat(document.getElementById('rr-custom').value) || 3;
+    readPricesFromInputs();
+
+    const riskAmt = state.riskMode === 'percent'
+        ? (state.riskPercent / 100) * state.balance
+        : state.riskAmount;
+
     const slPips = Math.abs(state.entryPrice - state.slPrice) / state.pip;
-    if (slPips > 0) {
-        const tpPipsTarget = slPips * state.riskReward;
-        const tp = state.direction === 'long'
-            ? state.entryPrice + (tpPipsTarget * state.pip)
-            : state.entryPrice - (tpPipsTarget * state.pip);
-        document.getElementById('tp-price').value = tp.toFixed(state.pip === 0.01 ? 2 : 5);
-    }
+    const tpPips = Math.abs(state.tpPrice - state.entryPrice) / state.pip;
+
+    const pipVal = state.unit * state.pip;
+    const lot = slPips > 0 ? riskAmt / (slPips * pipVal) : 0;
+    const posUnits = lot * state.unit;
+    const posPipVal = slPips > 0 ? riskAmt / slPips : 0;
+    const profit = tpPips * posPipVal;
+    const loss = slPips * posPipVal;
+    const actualRR = slPips > 0 ? tpPips / slPips : 0;
+    const margin = posUnits / state.leverage;
+    const riskPct = state.balance > 0 ? (riskAmt / state.balance) * 100 : 0;
+
+    // Update result hero
+    const lotEl = document.getElementById('rhc-lot');
+    lotEl.textContent = lot.toFixed(2);
+    animateNumber(lotEl);
+
+    document.getElementById('rhc-pair').textContent = state.pair ? state.pair.replace('USD', '/USD') : '--';
+    document.getElementById('result-desc').textContent = state.pair
+        ? `สำหรับ ${state.pair.replace('USD','/USD')} ที่ $${state.entryPrice.toFixed(2)}`
+        : 'ผลลัพธ์การคำนวณ';
+
+    // Summary row
+    document.getElementById('rmc-risk').textContent = '$' + riskAmt.toFixed(2);
+    document.getElementById('rmc-rr').textContent = '1 : ' + actualRR.toFixed(2);
+    document.getElementById('rmc-profit').textContent = '+$' + profit.toFixed(2);
+
+    // Detail cards
+    document.getElementById('rd-risk-amount').textContent = '$' + riskAmt.toFixed(2);
+    document.getElementById('rd-position').textContent = posUnits.toLocaleString() + ' Units';
+    document.getElementById('rd-pip-value').textContent = '$' + posPipVal.toFixed(2) + '/lot';
+    document.getElementById('rd-sl-pips').textContent = slPips.toFixed(1) + ' pips';
+    document.getElementById('rd-tp-pips').textContent = tpPips.toFixed(1) + ' pips';
+    document.getElementById('rd-margin').textContent = '$' + margin.toFixed(2);
+    document.getElementById('rd-risk-pct').textContent = riskPct.toFixed(2) + '%';
+    document.getElementById('rd-loss').textContent = '-$' + loss.toFixed(2);
+
+    // Risk bar
+    const maxRisk = state.balance * 0.05;
+    const fillPct = Math.min((riskAmt / maxRisk) * 100, 100);
+    document.getElementById('rvb-fill').style.width = fillPct + '%';
+    const badge = document.getElementById('rvb-badge');
+    if (riskPct <= 1) { badge.textContent = '🟢 ปลอดภัยมาก'; badge.style.background = 'rgba(34,197,94,0.15)'; badge.style.color = '#22c55e'; }
+    else if (riskPct <= 2) { badge.textContent = '🟢 ปลอดภัย'; badge.style.background = 'rgba(34,197,94,0.15)'; badge.style.color = '#22c55e'; }
+    else if (riskPct <= 5) { badge.textContent = '🟡 ระวัง'; badge.style.background = 'rgba(234,179,8,0.15)'; badge.style.color = '#eab308'; }
+    else { badge.textContent = '🔴 เสี่ยงสูง'; badge.style.background = 'rgba(239,68,68,0.15)'; badge.style.color = '#ef4444'; }
+
+    document.getElementById('rvb-max-label').textContent = `5% ($${maxRisk.toFixed(0)})`;
 }
 
-function tickerSelectPair(symbol) {
-    // Find the pair button for this symbol
-    const pairBtn = document.querySelector(`.pair-btn-v2[data-pair="${symbol}"]`);
-    if (pairBtn) {
-        selectPair(pairBtn);
-        renderPriceTicker();
-    }
-}
-
-async function refreshData() {
-    const btn = document.getElementById('refresh-btn');
-    btn.classList.add('spinning');
-    btn.textContent = 'กำลังโหลด...';
-    await loadAllMarketData();
-    btn.classList.remove('spinning');
-    btn.textContent = '🔄 Refresh';
+function restartCalculator() {
+    pulseElement(event.target);
+    state.pair = null;
+    state.entryPrice = 0;
+    state.slPrice = 0;
+    state.tpPrice = 0;
+    document.querySelectorAll('.pair-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('selected-pair-banner').style.display = 'none';
+    document.getElementById('step3-next').disabled = true;
+    document.getElementById('entry-price').value = '';
+    document.getElementById('sl-price').value = '';
+    document.getElementById('tp-price').value = '';
+    document.getElementById('price-summary').style.display = 'none';
+    setTimeout(() => goToStep(1), 300);
 }
 
 // ================================================
-// Lot Reference Table
+// Refresh All
 // ================================================
 
-function renderLotRefTable(pipValue) {
-    const lotSizes = [0.01, 0.05, 0.1, 0.2, 0.5, 1.0];
-    const tbody = document.getElementById('lot-ref-body');
-    tbody.innerHTML = '';
-
-    lotSizes.forEach(lot => {
-        const units = lot * 100000;
-        const pipVal = (units * state.pip).toFixed(2);
-        const riskAt100 = (units * state.pip * 100).toFixed(2);
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td style="color:var(--gold);font-weight:600;">${lot.toFixed(2)} lots</td>
-            <td>${units.toLocaleString()}</td>
-            <td>$${pipVal}</td>
-            <td>$${riskAt100}</td>
-        `;
-        tbody.appendChild(tr);
-    });
+async function refreshAll() {
+    const btn = document.getElementById('header-refresh-btn');
+    if (btn) btn.classList.add('spinning');
+    showLoading('กำลังรีเฟรชข้อมูล...');
+    await loadAllData();
+    if (btn) btn.classList.remove('spinning');
+    hideLoading();
 }
 
 // ================================================
-// Animations
+// Utility Animations
 // ================================================
 
-function animateResults() {
-    document.querySelectorAll('.result-card, .result-sub-card, .result-main-v2').forEach((el, i) => {
-        el.style.animation = 'none';
-        el.offsetHeight;
-        el.style.animation = `fadeIn 0.3s ease ${i * 0.05}s both`;
-    });
+function animateBtnClick(el) {
+    if (!el) return;
+    el.classList.add('pulse-click');
+    setTimeout(() => el.classList.remove('pulse-click'), 200);
+}
+
+function pulseElement(el) {
+    if (!el) return;
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = 'clickPulse 0.2s ease';
+}
+
+function shakeElement(el) {
+    if (!el) return;
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = 'shake 0.4s ease';
+}
+
+function animateNumber(el) {
+    if (!el) return;
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = 'countUp 0.4s ease';
 }
 
 // ================================================
@@ -517,36 +552,62 @@ function animateResults() {
 // ================================================
 
 function showLoading(text) {
-    const overlay = document.getElementById('loading-overlay');
-    document.getElementById('loading-text').textContent = text || 'กำลังดึงข้อมูล...';
-    overlay.style.display = 'flex';
+    const ov = document.getElementById('loading-overlay');
+    if (!ov) return;
+    document.getElementById('loading-text').textContent = text || 'กำลังโหลด...';
+    ov.style.display = 'flex';
 }
 
 function hideLoading() {
-    document.getElementById('loading-overlay').style.display = 'none';
+    const ov = document.getElementById('loading-overlay');
+    if (ov) ov.style.display = 'none';
 }
 
 // ================================================
-// Initialization
+// Init
 // ================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Attach input listeners
-    const inputs = document.querySelectorAll('input, select');
-    inputs.forEach(el => {
-        el.addEventListener('input', () => {
-            clearTimeout(el._calcTimer);
-            el._calcTimer = setTimeout(calculate, 300);
-        });
-        el.addEventListener('change', () => {
-            clearTimeout(el._calcTimer);
-            calculate();
-        });
+    // Attach price input listeners for live summary
+    ['entry-price', 'sl-price', 'tp-price'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', () => {
+                setTimeout(updatePriceSummary, 300);
+            });
+        }
     });
 
-    // Load market data from FMP
-    await loadAllMarketData();
+    // RR custom input
+    document.getElementById('rr-custom')?.addEventListener('input', function() {
+        const v = parseFloat(this.value);
+        if (!isNaN(v) && v > 0) {
+            state.rr = v;
+            document.querySelectorAll('.rr-btn').forEach(b => {
+                b.classList.toggle('active', parseInt(b.textContent.replace('1:','')) === v);
+            });
+        }
+    });
 
-    // Initial calculation
-    calculate();
+    // Initialize
+    goToStep(1);
+    await loadAllData();
+    updateRiskPreview();
+
+    // Sync step-3 next button state
+    const nextBtn = document.getElementById('step3-next');
+    if (nextBtn) nextBtn.disabled = !state.pair;
 });
+
+// Add shake keyframe to page
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = `
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+`;
+document.head.appendChild(shakeStyle);
