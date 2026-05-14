@@ -384,13 +384,23 @@ function selectPair(el) {
     state.pip = parseFloat(el.dataset.pip);
     state.unit = parseInt(el.dataset.unit);
 
-    // Update placeholders
+    // Update placeholders and clear stale prices for new pair
     const isJPY = state.pair.includes('JPY');
-    const isMetal = (state.pair === 'XAUUSD' || state.pair === 'BTCUSD');
+    const isMetal = (state.pair === 'XAUUSD' || state.pair === 'BTCUSD' || state.pair === 'ETHUSD');
     const decimals = (isJPY || isMetal) ? 2 : 5;
-    const entryInput = document.getElementById('entry-price');
-    entryInput.step = isJPY || isMetal ? '0.01' : '0.00001';
-    entryInput.placeholder = '0.00000'.slice(0, decimals + 2);
+    const step = isJPY || isMetal ? '0.01' : '0.00001';
+
+    document.getElementById('entry-price').value = '';
+    document.getElementById('entry-price').step = step;
+    document.getElementById('entry-price').placeholder = '0'.repeat(decimals + 2);
+
+    document.getElementById('sl-price').value = '';
+    document.getElementById('sl-price').step = step;
+    document.getElementById('sl-price').placeholder = '0'.repeat(decimals + 2);
+
+    document.getElementById('tp-price').value = '';
+    document.getElementById('tp-price').step = step;
+    document.getElementById('tp-price').placeholder = '0'.repeat(decimals + 2);
 
     // Update pair info bar
     updatePairInfoBar();
