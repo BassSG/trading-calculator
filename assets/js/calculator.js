@@ -65,7 +65,7 @@ async function fetchHistoricalChart(symbol, interval = '15min') {
 async function loadAllMarketData() {
     showLoading('กำลังดึงข้อมูลราคาตลาด...');
     try {
-        const symbols = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'XAUUSD', 'BTCUSD', 'EURGBP', 'EURJPY', 'GBPJPY'];
+        const symbols = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'XAUUSD', 'BTCUSD', 'ETHUSD', 'EURGBP', 'EURJPY', 'GBPJPY'];
         const promises = symbols.map(s => fetchQuote(s));
         const results = await Promise.allSettled(promises);
         results.forEach((result, i) => {
@@ -88,7 +88,7 @@ async function loadAllMarketData() {
 
 async function loadATRData(symbol) {
     // For metals/crypto use 15min; for forex use daily
-    const interval = (symbol === 'XAUUSD' || symbol === 'BTCUSD') ? '15min' : 'daily';
+    const interval = (symbol === 'XAUUSD' || symbol === 'BTCUSD' || symbol === 'ETHUSD') ? '15min' : 'daily';
     const history = await fetchHistoricalChart(symbol, interval);
 
     if (!history || history.length < 20) return;
@@ -151,7 +151,7 @@ async function loadATRData(symbol) {
 
 function renderPriceTicker() {
     const ticker = document.getElementById('price-ticker');
-    const watchList = ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD', 'BTCUSD', 'AUDUSD', 'USDCAD', 'NZDUSD'];
+    const watchList = ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD', 'BTCUSD', 'ETHUSD', 'AUDUSD', 'USDCAD', 'NZDUSD'];
 
     let html = '';
     watchList.forEach(sym => {
